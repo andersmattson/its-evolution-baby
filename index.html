@@ -27,14 +27,7 @@
 			z-index: 2;
 			pointer-events: none;
 		}
-		.target	{
-			position: absolute;
-		}
 
-		.target.t2 {
-			top: 125px;
-			left: 125px;
-		}
 		.stats {
 			position: absolute;
 			left: 1050px;
@@ -49,8 +42,6 @@
 	<span class="generation"></span>
 	<div class="environmentContainer">
 		<div class="environment"></div>
-		<!-- <div class="target"></div> -->
-		<!-- <div class="target t2"></div> -->
 	</div>
 	<div class="stats">
 		<button class="start">Starta</button>
@@ -64,9 +55,9 @@
 		Connected neurons total: <span class="connectedNeurons"></span><br>
 		Connected neurons avg: <span class="connectedNeuronsAvg"></span><br>
 		<br>
-		Avg distance traveled: <span class="avgDistanceTraveled"></span><br>
+		Avg. distance traveled: <span class="avgDistanceTraveled"></span><br>
 		<br>
-		DNA length: <span class="avgDnaLength"></span><br>
+		Data length: <span class="avgDnaLength"></span><br>
 	</div>
 	<script type="module">
 		import * as d3 from 'https://d3js.org/d3.v7.min.js';

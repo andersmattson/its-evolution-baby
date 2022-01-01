@@ -20,6 +20,7 @@ class Target {
 		this.elem.className = 'target';
 		this.elem.style.backgroundColor = color;
 		this.elem.style.borderRadius = '50%';
+		this.elem.style.position = 'absolute';
 		this.elem.addEventListener( 'mousedown', this.onMouseDown.bind( this ) );
 		this.elem.addEventListener( 'mouseup', this.onMouseUp.bind( this ) );
 		this.elem.addEventListener( 'mousemove', this.onMouseMove.bind( this ) );
