@@ -12,15 +12,12 @@ class Environment extends EventListener {
 
 	#canvas;
 	#interval = 			null;
+	#generation = 			0;
 	#iteration = 			0;
 	#maxIterations = 		100;
-	#stepDelay = 			100;
 	#numNetworks = 			100;
 	#mutationRate = 		0.01;
-	#generation = 			0;
 	#generationLastSize = 	0;
-	#evolution = 			0;
-	#testFn = 				() => false;
 	#waitForStart = 		false;
 	#numNeurons = 			10;
 	#numConnections = 		10;
@@ -33,10 +30,8 @@ class Environment extends EventListener {
 	constructor( { 
 		canvas, 
 		maxIterations, 
-		stepDelay, 
 		numNetworks, 
 		mutationRate, 
-		testFn, 
 		waitForStart,
 		numNeurons,
 		numConnections,
@@ -51,11 +46,9 @@ class Environment extends EventListener {
 			y: canvas.offsetHeight / 2,
 		};
 		this.#maxIterations = 		maxIterations || 100;
-		this.#stepDelay = 			stepDelay || 100;
 		this.#numNetworks = 		numNetworks || 100;
 		this.#mutationRate = 		mutationRate || 0.01;
-		this.#testFn = 				testFn 			|| (() => false);
-		this.#waitForStart = 		waitForStart || false;
+		this.#waitForStart = 		true;
 		this.#numNeurons = 			numNeurons 		|| 10;
 		this.#numConnections = 		numConnections 	|| 10;
 		this.#generationLastSize = 	this.#numNetworks;
@@ -66,11 +59,14 @@ class Environment extends EventListener {
 		this.initRepresentation();
 		this.initRandomNetworks();
 		requestAnimationFrame( this.renderNetworks.bind( this ) );
+
+		if( !waitForStart ) {
+			this.togglePause();
+		}
 	}
 
 	initRepresentation() {
 		for( let i = 0; i < this.#numNetworks; i++ ) {
-			let network = this.#networks[i];
 			let elem = document.createElement( 'div' );
 			elem.classList.add( 'network' );
 			elem.classList.add( `rep${i}` );
@@ -84,7 +80,6 @@ class Environment extends EventListener {
 
 	addNetwork ( network ) {
 		this.#networks.push( network );
-		// this.#canvas.appendChild( network.representation );
 		if( this.#render ) {
 			let rep = this.getRep( this.#networks.length - 1 );
 			rep.style.display = 'block';
@@ -96,7 +91,6 @@ class Environment extends EventListener {
 	clearNetworks () {
 		let i = 0;
 		while( this.#networks.length ) {
-			// this.#canvas.removeChild( this.#networks[ 0 ].representation );
 			this.getRep( i ).style.display = 'none';
 			this.#networks.shift();
 			i++;
@@ -107,10 +101,9 @@ class Environment extends EventListener {
 
 		for ( let i = 0; i < this.#networks.length; i++ ) {
 
-		// this.#networks.forEach( (network, idx) => {
 			let x = Math.min( this.#canvas.offsetWidth - 5,  Math.max( 0, Math.round( this.#renderScale.x + this.#renderScale.x * ( this.#networks[ i ].position.x ) - this.#networkOffset.x )));
 			let y = Math.min( this.#canvas.offsetHeight - 5, Math.max( 0, Math.round( this.#renderScale.y + this.#renderScale.y * ( this.#networks[ i ].position.y ) - this.#networkOffset.y )));
-			// network.representation.style.transform = 'translate(' + x + 'px, ' + y + 'px)';
+
 			let rep = this.getRep( i );
 			rep.style.left = x + 'px';
 			rep.style.top = y + 'px';
@@ -146,7 +139,6 @@ class Environment extends EventListener {
 
 		this.#networks.forEach( ( network, idx ) => {
 
-			// let survived = this.#testFn( network );
 			let survived = this.#targets.reduce( ( acc, target ) => {
 				acc += target.testFunction( network );
 				return acc;		
@@ -160,25 +152,16 @@ class Environment extends EventListener {
 
 			for ( let i = 0; i < offsprings; i++ ) {
 				networkIndex.push( idx );
-				// networks.push( network.clone( this.#mutationRate ) );
 			}
 
 		} );
 
-		
-		// let _oldNetworks = [ ...this.#networks ];
-		
 		while ( networks.length < this.#numNetworks ) {
 			networks.push( this.#networks[ networkIndex[ Math.floor( Math.random() * networkIndex.length ) ] ].clone( this.#mutationRate ) );
-			//networks.splice( Math.floor( Math.random() * networks.length ), 1 );
 		}
 		
 		this.clearNetworks();
 		this.#networks = networks;
-
-		// networks.forEach( network => {
-		// 	this.addNetwork( network );
-		// } );
 
 	}
 
@@ -194,8 +177,6 @@ class Environment extends EventListener {
 		
 		for ( let i = 0, l = this.#networks.length; i < l; i++ ) {
 			this.#networks[ i ].step( { targets: this.#targets } );
-		// this.#networks.forEach( network => {
-			// network.step( { targets: this.#targets } );
 		};
 
 	}
@@ -216,7 +197,6 @@ class Environment extends EventListener {
 			}
 		}, 0 );
 
-		this.dispatchEvent( 'start' );
 	}
 
 	stop() {
@@ -228,6 +208,7 @@ class Environment extends EventListener {
 		if( !this.#waitForStart && this.#networks.length ) {
 			this.start();
 		}
+		
 		stats.survivalRate = ( 100 * this.#generationLastSize / this.#numNetworks).toFixed( 2 );
 		this.dispatchEvent( 'generation', stats );
 
@@ -244,6 +225,9 @@ class Environment extends EventListener {
 		this.#waitForStart = !this.#waitForStart;
 		if( !this.#waitForStart ) {
 			this.start();
+			this.dispatchEvent( 'pause', false );
+		} else {
+			this.dispatchEvent( 'pause', true );
 		}
 		return this.#waitForStart;
 	}
