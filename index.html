@@ -44,8 +44,7 @@
 		<div class="environment"></div>
 	</div>
 	<div class="stats">
-		<button class="start">Starta</button>
-		<button class="pausa">Pausa</button>
+		<button class="pausa">Start</button>
 		<button class="render">Toggle render</button><br>
 		<button class="interactive">Toggle interactive</button><br>
 		Generation: <span class="generation"></span><br>
@@ -95,8 +94,8 @@
 			} );
 		} );
 
-		document.querySelector(".start").addEventListener( 'click', () => {
-			environment.start();
+		environment.addEventListener( 'pause', ( state ) => {
+			document.querySelector('.pausa').innerHTML = state ? 'Start' : 'Pause';
 		} );
 
 		document.querySelector(".pausa").addEventListener( 'click', () => {
