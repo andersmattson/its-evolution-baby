@@ -1,36 +1,7 @@
-// import { EventListener } from './eventlistener.js';
 import { createNeuron, stepNeuron, connectNeuronInput } from './neuron.js';
 import {} from './outputfunctions.js';
 import { NeuronDefinitions } from './neuron.js';
 import Constants from './constants.js';
-
-function dnaToStruct( dna ) {
-	let ret = { neurons: [], connections: []};
-
-	let numNeurons = parseInt( dna.substring( 0, Constants.NEURON_INDEX_LENGTH ), Constants.DNA_BASE );
-	let numConnections = parseInt( dna.substring( Constants.NEURON_INDEX_LENGTH, Constants.NEURON_INDEX_LENGTH + Constants.CONNECTION_INDEX_LENGTH ), Constants.DNA_BASE );
-
-	for( let i = 0; i < numNeurons; i++ ){
-		let idx = Constants.NEURON_INDEX_LENGTH + Constants.CONNECTION_INDEX_LENGTH + i * Constants.NEURON_TOTAL_LENGTH;
-
-		ret.neurons.push( {
-			type: parseInt( dna.substring( idx, idx + Constants.NEURON_TYPE_LENGTH ), Constants.DNA_BASE ),
-			initialValue: ( parseInt( dna.substring( idx + Constants.NEURON_TYPE_LENGTH, idx + Constants.NEURON_TOTAL_LENGTH ), Constants.DNA_BASE ) - Constants.NEURON_DATA_MIDDLE ) / Constants.NEURON_DATA_MIDDLE
-		} );
-	}
-
-	for( let i = 0; i < numConnections; i++ ){
-		let idx = Constants.NEURON_INDEX_LENGTH + Constants.CONNECTION_INDEX_LENGTH + numNeurons * Constants.NEURON_TOTAL_LENGTH + i * Constants.CONNECTION_TOTAL_LENGTH;
-
-		ret.connections.push( {
-			input: parseInt( dna.substring( idx, idx + Constants.NEURON_INDEX_LENGTH ), Constants.DNA_BASE ),
-			output: parseInt( dna.substring( idx + Constants.NEURON_INDEX_LENGTH, idx + Constants.NEURON_INDEX_LENGTH + Constants.CONNECTION_INDEX_LENGTH ), Constants.DNA_BASE ),
-			weight: ( parseInt( dna.substring( idx + Constants.NEURON_INDEX_LENGTH + Constants.CONNECTION_INDEX_LENGTH, idx + Constants.CONNECTION_TOTAL_LENGTH ), Constants.DNA_BASE ) - Constants.NEURON_DATA_MIDDLE ) / Constants.NEURON_DATA_MIDDLE
-		} );
-	}
-
-	return ret;
-}
 
 function structToDNA( struct ) {
 	
@@ -192,16 +163,7 @@ class Network {
 	}
 
 	addNeuron( neuron = null ) {
-
 		this.neurons.push( neuron );
-
-		// if( neuron.affects.x ) {
-		// 	this.#directions.x = true;
-		// } else if( neuron.affects.y ) {
-		// 	this.#directions.y = true;
-		// }
-
-		// this.updateColor();
 	}
 
 	connect ( input, output, weight = 1 ) {
@@ -216,7 +178,6 @@ class Network {
 					this.#_connectedNeurons.add( output );
 					this.#connectedNeurons.push( output );
 				}
-				// this.#connectedNeurons = [ ...this.#_connectedNeurons.values() ];
 			}
 			return result;
 		} else {
@@ -228,6 +189,8 @@ class Network {
 		this.iteration++;
 		let currentPosition = { x: this.position.x, y: this.position.y };
 		let hasMoved = false;
+		let moveX = 0;
+		let moveY = 0;
 		let smallestDistance = Infinity;
 		let closestTargetDirection = { x: 0, y: 0 };
 
@@ -258,37 +221,21 @@ class Network {
 				targetDirectionY: closestTargetDirection.y,
 			} );
 
-		// });
-		// this.#connectedNeurons.forEach( neuron => {
-
-			// neuron.previousValue = neuron.value;
-			// neuron.value = neuron.nextValue;
 			if( this.#connectedNeurons[i].affects.x ) {
-				this.position.x += this.#connectedNeurons[i].value;
-				hasMoved = true;
+				moveX += this.#connectedNeurons[i].value;
 			}
 			if( this.#connectedNeurons[i].affects.y ) {
-				this.position.y += this.#connectedNeurons[i].value;
-				hasMoved = true;
+				moveY += this.#connectedNeurons[i].value;
 			}
 		}
 
-		if( hasMoved ) {
-			// calculate distance moved
-			// console.log( this.position );
+		this.position.x += (moveX >= 0 ? Math.min( moveX, Constants.MAXIMUM_MOVING_DISTANCE ) : Math.max( moveX, -Constants.MAXIMUM_MOVING_DISTANCE ));
+		this.position.y += (moveY >= 0 ? Math.min( moveY, Constants.MAXIMUM_MOVING_DISTANCE ) : Math.max( moveY, -Constants.MAXIMUM_MOVING_DISTANCE ));
+
+		if( moveX !== 0 || moveY !== 0 ) {
 			this.totalDistanceTraveled += Math.sqrt( Math.pow( this.position.x - currentPosition.x, 2 ) + Math.pow( this.position.y - currentPosition.y, 2 ) );
 		}
 	}
-
-	// updateColor () {
-	// 	if( this.#directions.x && this.#directions.y ) {
-	// 		this.color = 'red';
-	// 	} else if( this.#directions.x || this.#directions.y ) {
-	// 		this.color = 'green';
-	// 	} else {
-	// 		this.color = 'blue';
-	// 	}
-	// }
 
 	get travelDistance() {
 		return Math.sqrt( Math.pow( this.initialPosition.x - this.position.x, 2 ) + Math.pow( this.initialPosition.y - this.position.y, 2 ) );
