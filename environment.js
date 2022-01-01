@@ -12,6 +12,7 @@ class Environment extends EventListener {
 
 	#canvas;
 	#interval = 			null;
+	#evolution = 			0;
 	#generation = 			0;
 	#iteration = 			0;
 	#iterationStartTime = 	0;
@@ -56,6 +57,7 @@ class Environment extends EventListener {
 		this.#randomInitSpawn = 	randomInitSpawn || false;
 		this.#render = 				render || false;
 		this.#survivorsOnly = 		survivorsOnly || false;
+		this.#evolution = 			0;
 
 		this.initRepresentation();
 		this.initRandomNetworks();
@@ -120,6 +122,7 @@ class Environment extends EventListener {
 		
 		this.clearNetworks();
 		this.#generation = 0;
+		this.#evolution++;
 
 		let dna = Network.randomDNA( this.#numNeurons, this.#numConnections );
 		for ( let i = 0; i < this.#numNetworks; i++ ) {
