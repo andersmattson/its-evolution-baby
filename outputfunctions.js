@@ -2,12 +2,16 @@ import { NeuronTypes, registerNeuronDefinition } from './neuron.js';
 import Constants from './constants.js';
 
 registerNeuronDefinition( function( args ) {
+	return args.weightedInput;
+}, NeuronTypes.SYNAPSE, {}, 'WeightedSum' );
+
+registerNeuronDefinition( function( args ) {
 	return Math.tanh( args.weightedInput );
 }, NeuronTypes.SYNAPSE, {}, 'Tanh' );
 
 registerNeuronDefinition( function( args ) {
 	return args.weightedInput / ( 1 + args.iteration );
-}, NeuronTypes.SYNAPSE, {}, 'DecayWeightedInput' );
+}, NeuronTypes.SYNAPSE, {}, 'WeightedInputDecay' );
 
 // registerNeuronDefinition( function( args ) {
 // 	return Math.sin( args.iteration * args.initialValue );
