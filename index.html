@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Neurons</title>
+	<script src="https://d3js.org/d3.v7.min.js"></script>
+	<style>
+		.network {
+			width: 5px;
+			height: 5px;
+			position: absolute;
+			background-color: rgb(255, 0, 0);
+		}
+		.environmentContainer {
+			position: absolute;
+			width: 1000px;
+			height: 1000px;
+			overflow: hidden;
+		}
+		.environment {
+			width: 1000px;
+			height: 1000px;
+			background-color: rgba( 0, 0, 0, 0.1 );
+			position: absolute;
+			z-index: 2;
+			pointer-events: none;
+		}
+		.target	{
+			position: absolute;
+		}
+
+		.target.t2 {
+			top: 125px;
+			left: 125px;
+		}
+		.stats {
+			position: absolute;
+			left: 1050px;
+			top: 10px;
+			width: 100%;
+			height: 100%;
+			z-index: 3;
+		}
+	</style>
+</head>
+<body>
+	<span class="generation"></span>
+	<div class="environmentContainer">
+		<div class="environment"></div>
+		<!-- <div class="target"></div> -->
+		<!-- <div class="target t2"></div> -->
+	</div>
+	<div class="stats">
+		<button class="start">Starta</button>
+		<button class="pausa">Pausa</button>
+		<button class="render">Toggle render</button><br>
+		<button class="interactive">Toggle interactive</button><br>
+		Generation: <span class="generation"></span><br>
+		Size: <span class="size"></span><br>
+		Survival rate: <span class="survivalRate"></span>%<br>
+		<br>
+		Connected neurons total: <span class="connectedNeurons"></span><br>
+		Connected neurons avg: <span class="connectedNeuronsAvg"></span><br>
+		<br>
+		Avg distance traveled: <span class="avgDistanceTraveled"></span><br>
+		<br>
+		DNA length: <span class="avgDnaLength"></span><br>
+	</div>
+	<script type="module">
+		import * as d3 from 'https://d3js.org/d3.v7.min.js';
+		import { Environment } from './environment.js';
+		import Target from './target.js';
+
+		const environment = new Environment({ 
+			canvas: document.querySelector('.environment'),
+			stepDelay: 1,
+			numNetworks: 400,
+			numNeurons: 128,
+			numConnections: 128,
+			mutationRate: 0.5,
+			testFn: (network) => {
+				if(
+					network.position.x < 0.8 && network.position.x > 0.2 && 
+					network.position.y < 0.8 && network.position.y > 0.2
+				) {
+					if( network.totalDistanceTraveled < 2 ) {
+						return 3;
+					}
+					else if( network.totalDistanceTraveled < 3 ) {
+						return 2;
+					}
+					return 1;
+				}
+				else
+					return 0;
+			},
+			waitForStart: false,
+			randomInitSpawn: true,
+			survivorsOnly: false,
+		} );
+
+		environment.addTarget( new Target( 0.5, 0.5, 0.2, '#ffff00', environment.renderScale ) );
+
+		environment.addEventListener( 'generation', ( stats ) => {
+			
+			const target = document.querySelector(".stats");
+			[ 
+				'generation', 
+				'survivalRate',
+				'size', 
+				'connectedNeuronsAvg',
+				'connectedNeurons',
+				'avgDistanceTraveled',
+				'avgDnaLength',
+			].forEach( ( key ) => {
+				document.querySelector(`.stats .${key}`).innerHTML = stats[key];
+			} );
+		} );
+
+		document.querySelector(".start").addEventListener( 'click', () => {
+			environment.start();
+		} );
+
+		document.querySelector(".pausa").addEventListener( 'click', () => {
+			environment.togglePause();
+		} );
+
+		document.querySelector(".render").addEventListener( 'click', () => {
+			environment.toggleRender();
+		} );
+
+		document.querySelector(".interactive").addEventListener( 'click', () => {
+			environment.toggleInteractiveMode();
+		} );
+
+	</script>
+</body>
+</html>
