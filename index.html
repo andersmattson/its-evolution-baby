@@ -49,6 +49,7 @@
 		<button class="render">Toggle render</button><br>
 		<button class="interactive">Toggle interactive</button><br>
 		Generation: <span class="generation"></span><br>
+		ms per generation: <span class="duration"></span>ms<br>
 		Size: <span class="size"></span><br>
 		Survival rate: <span class="survivalRate"></span>%<br>
 		<br>
@@ -66,28 +67,11 @@
 
 		const environment = new Environment({ 
 			canvas: document.querySelector('.environment'),
-			stepDelay: 1,
 			numNetworks: 400,
 			numNeurons: 128,
 			numConnections: 128,
 			mutationRate: 0.5,
-			testFn: (network) => {
-				if(
-					network.position.x < 0.8 && network.position.x > 0.2 && 
-					network.position.y < 0.8 && network.position.y > 0.2
-				) {
-					if( network.totalDistanceTraveled < 2 ) {
-						return 3;
-					}
-					else if( network.totalDistanceTraveled < 3 ) {
-						return 2;
-					}
-					return 1;
-				}
-				else
-					return 0;
-			},
-			waitForStart: false,
+			waitForStart: true,
 			randomInitSpawn: true,
 			survivorsOnly: false,
 		} );
@@ -105,6 +89,7 @@
 				'connectedNeurons',
 				'avgDistanceTraveled',
 				'avgDnaLength',
+				'duration'
 			].forEach( ( key ) => {
 				document.querySelector(`.stats .${key}`).innerHTML = stats[key];
 			} );

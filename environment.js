@@ -14,6 +14,7 @@ class Environment extends EventListener {
 	#interval = 			null;
 	#generation = 			0;
 	#iteration = 			0;
+	#iterationStartTime = 	0;
 	#maxIterations = 		100;
 	#numNetworks = 			100;
 	#mutationRate = 		0.01;
@@ -188,6 +189,8 @@ class Environment extends EventListener {
 		} else {
 			this.regenerateNetworks();
 		}
+		
+		this.#iterationStartTime = Date.now();
 
 		this.#interval = setInterval( () => {
 			this.step();
@@ -279,6 +282,7 @@ class Environment extends EventListener {
 			avgDistanceTraveled: ( totalDistanceTraveled / this.#networks.length ).toFixed( 2 ) * 1,
 			avgDnaLength: ( totalDnaLength / this.#networks.length ).toFixed( 2 ) * 1,
 			totalDnaLength: totalDnaLength,
+			duration: ( Date.now() - this.#iterationStartTime ),
 		}
 	}
 
