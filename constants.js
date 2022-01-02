@@ -15,8 +15,6 @@ class ConstantsClass {
 	NEURON_DATA_MIDDLE = -1; // Calculated
 
 	MAXIMUM_MOVING_DISTANCE = 0.001;
-	SCALEX = 1;
-	SCALEY = 1;
 
 	constructor () {
 
