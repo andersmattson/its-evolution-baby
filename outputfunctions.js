@@ -6,6 +6,10 @@ registerNeuronDefinition( function( args ) {
 }, NeuronTypes.SYNAPSE, {}, 'WeightedSum' );
 
 registerNeuronDefinition( function( args ) {
+	return args.weightedAverage;
+}, NeuronTypes.SYNAPSE, {}, 'WeightedAverage' );
+
+registerNeuronDefinition( function( args ) {
 	return Math.tanh( args.weightedInput );
 }, NeuronTypes.SYNAPSE, {}, 'Tanh' );
 
@@ -55,7 +59,7 @@ registerNeuronDefinition( function( args ) {
 
 registerNeuronDefinition( function( args ) {
 	return 1 / ( 1 + args.distanceToTarget );
-}, NeuronTypes.SENSORY, {}, 'TargetDistance' );
+}, NeuronTypes.SENSORY, {}, 'InvertedTargetDistance' );
 
 registerNeuronDefinition( function( args ) {
 	return args.targetDirectionX;
