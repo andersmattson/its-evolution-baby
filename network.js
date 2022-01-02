@@ -69,16 +69,19 @@ class Network {
 	iteration = 0;
 	position = { x: 0, y: 0 };
 	initialPosition = { x: 0, y: 0 };
-	// color = '#0000FF';
-	// #directions = {x: false, y: false};
+	renderScale = { x: 1, y: 1, xRatio: 1, yRatio: 1 };
 	dna = '';
 	totalDistanceTraveled = 0;
 
-	constructor ( { dna } ) {
+	constructor ( { dna, renderScale } ) {
+
+		this.renderScale = renderScale;
+
 		if( dna ){
 			this.dna = dna;
 			this.setupFromDNA();
 		}
+
 		this.setRandomPosition();
 	}
 
@@ -111,8 +114,11 @@ class Network {
 	}
 
 	setRandomPosition() {
-		this.position = { x: 2 * ( Math.random() - 0.5 ), y: 2 * ( Math.random() - 0.5 ) };
+		this.position = { x: 2 * ( Math.random() - 0.5 ) * this.renderScale.xRatio, y: 2 * ( Math.random() - 0.5 ) * this.renderScale.yRatio };
 		this.initialPosition = { ...this.position };
+		if( this.position.x > this.renderScale.xRatio ){
+			console.log( this.position.x );
+		}
 	}
 
 	static randomDNA ( maxNeurons, maxConnections ) {
@@ -133,7 +139,7 @@ class Network {
 
 	clone ( mutate = 0.01 ) {
 		let dna = this.cloneDNA( mutate );
-		return new Network( { dna } );
+		return new Network( { dna, renderScale: this.renderScale } );
 	}
 
 	get DNA () {
@@ -188,7 +194,6 @@ class Network {
 	step( { targets } ) {
 		this.iteration++;
 		let currentPosition = { x: this.position.x, y: this.position.y };
-		let hasMoved = false;
 		let moveX = 0;
 		let moveY = 0;
 		let smallestDistance = Infinity;
@@ -212,7 +217,6 @@ class Network {
 
 		for ( let i = 0, l = this.#connectedNeurons.length; i < l; i++ ) {
 
-		// this.#connectedNeurons.forEach( neuron => {
 			stepNeuron( this.#connectedNeurons[i], { 
 				iteration: this.iteration,
 				position: this.position,
@@ -232,6 +236,9 @@ class Network {
 		this.position.x += (moveX >= 0 ? Math.min( moveX, Constants.MAXIMUM_MOVING_DISTANCE ) : Math.max( moveX, -Constants.MAXIMUM_MOVING_DISTANCE ));
 		this.position.y += (moveY >= 0 ? Math.min( moveY, Constants.MAXIMUM_MOVING_DISTANCE ) : Math.max( moveY, -Constants.MAXIMUM_MOVING_DISTANCE ));
 
+		this.position.x = Math.min( Math.max( this.position.x, -this.renderScale.xRatio ), this.renderScale.xRatio );
+		this.position.y = Math.min( Math.max( this.position.y, -this.renderScale.yRatio ), this.renderScale.yRatio );
+		
 		if( moveX !== 0 || moveY !== 0 ) {
 			this.totalDistanceTraveled += Math.sqrt( Math.pow( this.position.x - currentPosition.x, 2 ) + Math.pow( this.position.y - currentPosition.y, 2 ) );
 		}

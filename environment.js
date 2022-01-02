@@ -4,7 +4,7 @@ import { EventListener } from './eventlistener.js';
 class Environment extends EventListener {
 
 	#networks = [];
-	#renderScale = { x: 1, y: 1 };
+	renderScale = { x: 1, y: 1, xRatio: 1, yRatio: 1 };
 	#networkOffset = {
 		x: -2,
 		y: -2
@@ -43,10 +43,22 @@ class Environment extends EventListener {
 	} ) {
 		super();
 		this.#canvas = canvas;
-		this.#renderScale = {
+		
+		this.renderScale = {
 			x: canvas.offsetWidth / 2,
 			y: canvas.offsetHeight / 2,
 		};
+
+		if( this.renderScale.x > this.renderScale.y ) {
+			this.renderScale.xRatio = this.renderScale.x / this.renderScale.y;
+			this.renderScale.yRatio = 1;
+			this.renderScale.pixelScale = this.renderScale.y;
+		} else {
+			this.renderScale.xRatio = 1;
+			this.renderScale.yRatio = this.renderScale.y / this.renderScale.x;
+			this.renderScale.pixelScale = this.renderScale.x;
+		}
+
 		this.#maxIterations = 		maxIterations || 100;
 		this.#numNetworks = 		numNetworks || 100;
 		this.#mutationRate = 		mutationRate || 0.01;
@@ -55,12 +67,13 @@ class Environment extends EventListener {
 		this.#numConnections = 		numConnections 	|| 10;
 		this.#generationLastSize = 	this.#numNetworks;
 		this.#randomInitSpawn = 	randomInitSpawn || false;
-		this.#render = 				render || false;
+		this.#render = 				render || true;
 		this.#survivorsOnly = 		survivorsOnly || false;
 		this.#evolution = 			0;
 
 		this.initRepresentation();
 		this.initRandomNetworks();
+
 		requestAnimationFrame( this.renderNetworks.bind( this ) );
 
 		if( !waitForStart ) {
@@ -85,9 +98,10 @@ class Environment extends EventListener {
 		this.#networks.push( network );
 		if( this.#render ) {
 			let rep = this.getRep( this.#networks.length - 1 );
+			let position = this.pixelPosition( network.position );
 			rep.style.display = 'block';
-			rep.style.left = Math.min( this.#canvas.offsetWidth - 5, Math.max( 0, Math.round( this.#renderScale.x + this.#renderScale.x * ( network.position.x ) - this.#networkOffset.x ))) + 'px';
-			rep.style.top = Math.min( this.#canvas.offsetHeight - 5, Math.max( 0, Math.round( this.#renderScale.y + this.#renderScale.y * ( network.position.y ) - this.#networkOffset.y ))) + 'px';
+			rep.style.left = position.x + 'px';
+			rep.style.top = position.x + 'px';
 		}
 	}
 
@@ -104,13 +118,12 @@ class Environment extends EventListener {
 
 		for ( let i = 0; i < this.#networks.length; i++ ) {
 
-			let x = Math.min( this.#canvas.offsetWidth - 5,  Math.max( 0, Math.round( this.#renderScale.x + this.#renderScale.x * ( this.#networks[ i ].position.x ) - this.#networkOffset.x )));
-			let y = Math.min( this.#canvas.offsetHeight - 5, Math.max( 0, Math.round( this.#renderScale.y + this.#renderScale.y * ( this.#networks[ i ].position.y ) - this.#networkOffset.y )));
-
+			let position = this.pixelPosition( this.#networks[ i ].position );
 			let rep = this.getRep( i );
-			rep.style.left = x + 'px';
-			rep.style.top = y + 'px';
+			rep.style.left = position.x + 'px';
+			rep.style.top = position.y + 'px';
 			rep.style.display = 'block';
+
 		};
 
 		if( this.#render ) {
@@ -129,7 +142,7 @@ class Environment extends EventListener {
 			if( this.#randomInitSpawn ) {
 				dna = Network.randomDNA( this.#numNeurons, this.#numConnections );
 			}
-			this.addNetwork( new Network( { dna } ) );
+			this.addNetwork( new Network( { dna, renderScale: this.renderScale } ) );
 		}
 	}
 
@@ -175,7 +188,7 @@ class Environment extends EventListener {
 			target.step( {
 				iteration: this.#iteration,
 				render: this.#render,
-				renderScale: this.#renderScale,
+				renderScale: this.renderScale,
 			} );
 		} );
 		
@@ -214,7 +227,7 @@ class Environment extends EventListener {
 		if( !this.#waitForStart && this.#networks.length ) {
 			this.start();
 		}
-		
+
 		stats.survivalRate = ( 100 * this.#generationLastSize / this.#numNetworks).toFixed( 2 );
 		this.dispatchEvent( 'generation', stats );
 
@@ -223,8 +236,8 @@ class Environment extends EventListener {
 	addTarget ( target ) {
 		this.#targets.push( target );
 		this.#canvas.parentNode.appendChild( target.getElement() );
-		target.getElement().style.width = ( target.radius * 2 * this.#renderScale.x) + 'px';
-		target.getElement().style.height = ( target.radius * 2 * this.#renderScale.y) + 'px';
+		target.getElement().style.width = ( target.radius * 2 * this.renderScale.x / this.renderScale.xRatio ) + 'px';
+		target.getElement().style.height = ( target.radius * 2 * this.renderScale.y / this.renderScale.yRatio ) + 'px';
 	}
 
 	togglePause() {
@@ -289,8 +302,11 @@ class Environment extends EventListener {
 		}
 	}
 
-	get renderScale() {
-		return this.#renderScale;
+	pixelPosition( position ) {
+		return {
+			x: this.renderScale.x + position.x * this.renderScale.pixelScale,
+			y: this.renderScale.y + position.y * this.renderScale.pixelScale,
+		}
 	}
 }
 

@@ -2,19 +2,19 @@
 class Target {
 
 	elem;
-	renderScale = null;
 	#interactive = false;
+	#environment = null;
 
 	#isDragged = false;
 	#dragStartCoords;
 	#dragStartXY;
 
-	constructor ( x, y, radius, color, renderScale ) {
+	constructor ( environment, x, y, radius, color ) {
 		this.x = x;
 		this.y = y;
 		this.radius = radius;
 		this.color = color;
-		this.renderScale = renderScale;
+		this.#environment = environment;
 
 		this.elem = document.createElement( 'div' );
 		this.elem.className = 'target';
@@ -53,7 +53,7 @@ class Target {
 			let deltaX = e.clientX - this.#dragStartCoords.x;
 			let deltaY = e.clientY - this.#dragStartCoords.y;
 
-			this.setPosition( this.#dragStartXY.x + deltaX / this.renderScale.x, this.#dragStartXY.y + deltaY / this.renderScale.y );
+			this.setPosition( this.#dragStartXY.x + deltaX / this.#environment.renderScale.x, this.#dragStartXY.y + deltaY / this.#environment.renderScale.y );
 			this.updateEnvironmentPosition();
 		}
 	}
@@ -70,13 +70,14 @@ class Target {
 	}
 
 	setPosition ( x, y ) {
-		this.x = Math.min( 1 - this.radius, Math.max( -1 + this.radius, x ) );
-		this.y = Math.min( 1 - this.radius, Math.max( -1 + this.radius, y ) );
+		this.x = Math.min( this.#environment.renderScale.xRatio - this.radius, Math.max( -this.#environment.renderScale.xRatio + this.radius, x ) );
+		this.y = Math.min( this.#environment.renderScale.yRatio - this.radius, Math.max( -this.#environment.renderScale.yRatio + this.radius, y ) );
+		console.log( this.x, this.#environment.renderScale.xRatio );
 	}
 
 	step( { iteration, render } ) {
 		if( iteration === 0 ){
-			this.setPosition( 2 * Math.random() - 1, 2 * Math.random() - 1 );
+			this.setPosition( ( 2 * Math.random() - 1 ) * this.#environment.renderScale.xRatio, ( 2 * Math.random() - 1 ) * this.#environment.renderScale.yRatio );
 
 			if( render ){
 				this.updateEnvironmentPosition();
@@ -85,13 +86,13 @@ class Target {
 	}
 
 	updateEnvironmentPosition() {
-		let x = Math.round( this.renderScale.x * ( this.x + 1 - this.radius ) );
-		let y = Math.round( this.renderScale.y * ( this.y + 1 - this.radius ) );
-		this.elem.style.left = x + 'px';
-		this.elem.style.top = y + 'px';
+		let position = this.#environment.pixelPosition( {
+			x: this.x - this.radius,
+			y: this.y - this.radius,
+		} );
+		this.elem.style.left = position.x + 'px';
+		this.elem.style.top = position.y + 'px';
 	}
-
-	// this.x = px / this.renderScale.x - 1 + this.radius
 
 	testFunction( network ) {
 		return this.distance( network.position ) == 0 ? 

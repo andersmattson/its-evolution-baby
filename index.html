@@ -7,6 +7,14 @@
 	<title>Neurons</title>
 	<script src="https://d3js.org/d3.v7.min.js"></script>
 	<style>
+
+		html, body {
+			margin: 0;
+			padding: 0;
+			height: 100%;
+			overflow: hidden;
+			font-family: Arial, Helvetica, sans-serif;
+		}
 		.network {
 			width: 5px;
 			height: 5px;
@@ -15,13 +23,13 @@
 		}
 		.environmentContainer {
 			position: absolute;
-			width: 1000px;
-			height: 1000px;
+			width: 100vw;
+			height: 100vh;
 			overflow: hidden;
 		}
 		.environment {
-			width: 1000px;
-			height: 1000px;
+			width: 100%;
+			height: 100%;
 			background-color: rgba( 0, 0, 0, 0.1 );
 			position: absolute;
 			z-index: 2;
@@ -30,11 +38,23 @@
 
 		.stats {
 			position: absolute;
-			left: 1050px;
+			left: 30px;
 			top: 10px;
-			width: 100%;
-			height: 100%;
+			width: 320px;
 			z-index: 3;
+		}
+
+		.explanations {
+			position: absolute;
+			right: -450px;
+			top: 0;
+			width: 450px;
+			height: 100vh;
+			overflow-y: auto;
+			z-index: 3;
+			background-color: #ffffff;
+			padding: 30px;
+			box-sizing: border-box;
 		}
 	</style>
 </head>
@@ -44,13 +64,15 @@
 		<div class="environment"></div>
 	</div>
 	<div class="stats">
+		<h1>It's Evolution, baby!</h1>
 		<button class="pausa">Start</button>
-		<button class="render">Toggle render</button><br>
+		<button class="render">Toggle render</button>
 		<button class="interactive">Toggle interactive</button><br>
 		Generation: <span class="generation"></span><br>
 		ms per generation: <span class="duration"></span>ms<br>
 		Size: <span class="size"></span><br>
 		Survival rate: <span class="survivalRate"></span>%<br>
+		<div class="plot"></div>
 		<br>
 		Connected neurons total: <span class="connectedNeurons"></span><br>
 		Connected neurons avg: <span class="connectedNeuronsAvg"></span><br>
@@ -59,10 +81,89 @@
 		<br>
 		Data length: <span class="avgDnaLength"></span><br>
 	</div>
+	<div class="explanations">
+		<h1>Explanations</h1>
+		<p>
+			Sooo, I understand all these red dots might need an explanation. If you're the kind of person that
+			gets off on words like "neuron", "sigmoid" and "exponential decay", skip ahead to
+			the more in-depth explanation further down. If you're not, stay right here and I'll try to explain
+			this in a less technical manner.
+
+			<h2>tldr; It's evolution, baby!</h2>
+			I'll try to keep this brief. H-hrm. In the beginning there was nothing, but then, after a quite
+			hefty boom, suddenly there was lots of stuff all over the place that started to lump together to 
+			big shiny things and then other lumps began go around in circles around the big shiny things and on one of them
+			there was some water and where there's water there's mushy stuff and that's how life began.
+			<br><br>
+			To evolve in to something more interesting than mushy goo, shit needs to happen over and over again and 
+			shit needs to change, and that's what this is all about. 
+
+			<h2>The more in-depth explanation</h2>
+			Each single dot represents a network of neurons. Kind of like your brain, only smaller (hopefully).
+			They all have one single goal in life, and that is to reproduce.
+		</p>
+		<h2>Neurons and connections</h2>
+		<p>
+			A <b>neuron</b> is basically a simple mathematical function that 
+			can take any number of input signals and return a single output signal. <br>
+		</p>
+		<p>
+			A <b>connection</b> is a connection between two neurons and each connection 
+			has a weight assigned to it. A connection always has a direction, 
+			but there is nothing stopping two neurons from having two opposite connections.
+		</p>
+		<h2>Neuron functions</h2>
+		Neurons have one of four different functions.
+		<h3>Generators</h3>
+		A Generator neuron doesn't have any input connections, it only generates a 
+		signal from global environment variables such as time or the initial value 
+		it was given when created.
+		<h3>Sensors</h3>
+		A Sensor neuron's only inputs are from observations that each network do in
+		the environment, like the strength of a scent or the direction from where the scent is coming.
+		<h3>Synapses</h3>
+		A Synapse neuron can take one or more inputs and weights, and return an output based on some 
+		formula, like tanh, sigmoid or exponential decay (both depending on the weighted inputs and time).
+		<h4>WeightedSum</h4>
+		Returns the weighted sum of the inputs.
+		<h4>WeightedAverage</h4>
+		Returns the weighted average of the inputs.
+		<h4>Tanh</h4>
+		Returns the hyperbolic tangent of the weighted sum of the inputs.
+
+		<h3>Actors</h3>
+		An Actor neuron can take one or more inputs and weights, and it's output is connected to an
+		action that each network can take, like moving up/down or left/right.
+		<h2>Neuron types</h2>
+		Each individual neuron can be one of the following types:
+		<h3></h3>
+	</div>
 	<script type="module">
 		import * as d3 from 'https://d3js.org/d3.v7.min.js';
+		import * as Plot from "https://cdn.skypack.dev/@observablehq/plot@0.3";
 		import { Environment } from './environment.js';
 		import Target from './target.js';
+
+		let plotData = new Array(100).fill(0);
+		let plot = Plot.lineY( plotData );
+
+		let plotOptions = {
+			height: 100,
+			margin: 0,
+			y: {
+				domain: [0, 100],
+			},
+			x: {
+				axis: null
+			},
+			style: {
+				background: "transparent"
+			}
+		};
+
+		let lastPlot = plot.plot(plotOptions);
+
+		document.querySelector('.plot').appendChild( lastPlot );
 
 		const environment = new Environment({ 
 			canvas: document.querySelector('.environment'),
@@ -75,7 +176,7 @@
 			survivorsOnly: false,
 		} );
 
-		environment.addTarget( new Target( 0.5, 0.5, 0.2, '#ffff00', environment.renderScale ) );
+		environment.addTarget( new Target( environment, 0.5, 0.5, 0.2, '#ffff00', environment.renderScale ) );
 
 		environment.addEventListener( 'generation', ( stats ) => {
 			
@@ -92,6 +193,12 @@
 			].forEach( ( key ) => {
 				document.querySelector(`.stats .${key}`).innerHTML = stats[key];
 			} );
+
+			plotData.shift();
+			plotData.push( stats.survivalRate );
+			document.querySelector('.plot').removeChild(lastPlot);
+			lastPlot = plot.plot(plotOptions);
+			document.querySelector('.plot').appendChild(lastPlot);
 		} );
 
 		environment.addEventListener( 'pause', ( state ) => {
