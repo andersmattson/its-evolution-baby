@@ -15,6 +15,8 @@ class ConstantsClass {
 	NEURON_DATA_MIDDLE = -1; // Calculated
 
 	MAXIMUM_MOVING_DISTANCE = 0.001;
+	SCALEX = 1;
+	SCALEY = 1;
 
 	constructor () {
 
@@ -31,10 +33,10 @@ class ConstantsClass {
 		this.CONNECTION_INDEX_LENGTH = -1; // Calculated
 		this.NEURON_INDEX_LENGTH = -1; // Calculated
 	
-		this.NEURON_DATA_MIDDLE = -1; // Calculated
+		this.NEURON_DATA_MIDDLE = Math.pow( 4, this.NEURON_DATA_LENGTH ) / 2;
 	
 		this.MAXIMUM_MOVING_DISTANCE = 0.05;
-	
+
 		this.updateNeuronTypeCount( this.#NEURON_TYPES );
 	}
 
@@ -48,12 +50,11 @@ class ConstantsClass {
 
 	updateNeuronTypeCount ( count ) {
 		this.#NEURON_TYPES = count;
-		this.NEURON_TYPE_LENGTH = this.NEURON_TYPES.toString(4).length;
+		this.NEURON_TYPE_LENGTH = this.NEURON_TYPES.toString( this.DNA_BASE ).length;
 		this.NEURON_TOTAL_LENGTH = this.NEURON_TYPE_LENGTH + this.NEURON_DATA_LENGTH;
-		this.NEURON_INDEX_LENGTH = this.MAX_NEURONS.toString(4).length;
-		this.CONNECTION_INDEX_LENGTH = this.MAX_CONNECTIONS.toString(4).length;
+		this.NEURON_INDEX_LENGTH = this.MAX_NEURONS.toString( this.DNA_BASE ).length;
+		this.CONNECTION_INDEX_LENGTH = this.MAX_CONNECTIONS.toString( this.DNA_BASE ).length;
 		this.CONNECTION_TOTAL_LENGTH = this.CONNECTION_INDEX_LENGTH * 2 + this.CONNECTION_DATA_LENGTH;
-		this.NEURON_DATA_MIDDLE = Math.pow( 2, ( this.NEURON_TOTAL_LENGTH - 2 ) * 2 - 1 );
 	}
 }
 
