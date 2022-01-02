@@ -72,7 +72,6 @@ class Target {
 	setPosition ( x, y ) {
 		this.x = Math.min( this.#environment.renderScale.xRatio - this.radius, Math.max( -this.#environment.renderScale.xRatio + this.radius, x ) );
 		this.y = Math.min( this.#environment.renderScale.yRatio - this.radius, Math.max( -this.#environment.renderScale.yRatio + this.radius, y ) );
-		console.log( this.x, this.#environment.renderScale.xRatio );
 	}
 
 	step( { iteration, render } ) {

@@ -16,6 +16,7 @@ class Environment extends EventListener {
 	#generation = 			0;
 	#iteration = 			0;
 	#iterationStartTime = 	0;
+	#stepDelay = 			0;
 	#maxIterations = 		100;
 	#numNetworks = 			100;
 	#mutationRate = 		0.01;
@@ -70,6 +71,7 @@ class Environment extends EventListener {
 		this.#render = 				render || true;
 		this.#survivorsOnly = 		survivorsOnly || false;
 		this.#evolution = 			0;
+		this.#stepDelay = 			0;
 
 		this.initRepresentation();
 		this.initRandomNetworks();
@@ -196,6 +198,8 @@ class Environment extends EventListener {
 			this.#networks[ i ].step( { targets: this.#targets } );
 		};
 
+		this.#iteration++;
+
 	}
 
 	start() {
@@ -210,11 +214,10 @@ class Environment extends EventListener {
 
 		this.#interval = setInterval( () => {
 			this.step();
-			this.#iteration++;
 			if ( this.#iteration >= this.#maxIterations && !this.#interactiveMode ) {
 				this.stop();
 			}
-		}, 0 );
+		}, this.#stepDelay );
 
 	}
 
@@ -264,6 +267,19 @@ class Environment extends EventListener {
 		this.#targets.forEach( target => {
 			target.setInteractive( this.#interactiveMode );
 		});
+	}
+
+	updateStepDelay ( stepDelay ) {
+		this.#stepDelay = stepDelay || 0;
+
+		clearInterval( this.#interval );
+
+		this.#interval = setInterval( () => {
+			this.step();
+			if ( this.#iteration >= this.#maxIterations && !this.#interactiveMode ) {
+				this.stop();
+			}
+		}, this.#stepDelay);
 	}
 
 	get size() {

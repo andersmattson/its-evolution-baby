@@ -68,6 +68,7 @@
 		<button class="pausa">Start</button>
 		<button class="render">Toggle render</button>
 		<button class="interactive">Toggle interactive</button><br>
+		<label for="stepDelay">Speed (ms):</label><input type="range" min="1" max="100" class="stepDelay"></input><br>
 		Generation: <span class="generation"></span><br>
 		ms per generation: <span class="duration"></span>ms<br>
 		Size: <span class="size"></span><br>
@@ -215,6 +216,10 @@
 
 		document.querySelector(".interactive").addEventListener( 'click', () => {
 			environment.toggleInteractiveMode();
+		} );
+
+		document.querySelector(".stepDelay").addEventListener( 'input', ( e ) => {
+			environment.updateStepDelay( e.target.value );
 		} );
 
 	</script>

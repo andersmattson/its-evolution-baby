@@ -116,9 +116,6 @@ class Network {
 	setRandomPosition() {
 		this.position = { x: 2 * ( Math.random() - 0.5 ) * this.renderScale.xRatio, y: 2 * ( Math.random() - 0.5 ) * this.renderScale.yRatio };
 		this.initialPosition = { ...this.position };
-		if( this.position.x > this.renderScale.xRatio ){
-			console.log( this.position.x );
-		}
 	}
 
 	static randomDNA ( maxNeurons, maxConnections ) {
@@ -238,7 +235,7 @@ class Network {
 
 		this.position.x = Math.min( Math.max( this.position.x, -this.renderScale.xRatio ), this.renderScale.xRatio );
 		this.position.y = Math.min( Math.max( this.position.y, -this.renderScale.yRatio ), this.renderScale.yRatio );
-		
+
 		if( moveX !== 0 || moveY !== 0 ) {
 			this.totalDistanceTraveled += Math.sqrt( Math.pow( this.position.x - currentPosition.x, 2 ) + Math.pow( this.position.y - currentPosition.y, 2 ) );
 		}
