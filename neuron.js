@@ -33,16 +33,21 @@ function stepNeuron ( neuron, args ) {
 	weightedAverage = weightedInput / ( neuron.inputs.length + 1 );
 
 	neuron.value = NeuronDefinitions[ neuron.type ]( {
-		iteration: args.iteration, 					// Think of this as the time
-		position: args.position, 					// Think of this as the sight
-		distanceToTarget: args.distanceToTarget,	// Think of this as the strength of a scent
-		targetDirectionX: args.targetDirectionX,	// The direction from where the scent is coming
-		targetDirectionY: args.targetDirectionY,	// The direction from where the scent is coming
-		initialValue: neuron.initialValue,			// The initial value of the neuron, this comes from the DNA
-		weightedInput,								// The weighted input to the neuron
-		weightedAverage,							// The weighted average of the inputs
-		value: neuron.value							// The current value of the neuron
+		iteration: args.iteration, 						// Think of this as the time
+		position: args.position, 						// Think of this as the sight
+		distanceToTarget: args.distanceToTarget,		// Think of this as the strength of a scent
+		targetDirectionX: args.targetDirectionX,		// The direction from where the scent is coming
+		targetDirectionY: args.targetDirectionY,		// The direction from where the scent is coming
+		initialValue: neuron.initialValue,				// The initial value of the neuron, this comes from the DNA
+		weightedInput,									// The weighted input to the neuron
+		weightedAverage,								// The weighted average of the inputs
+		value: neuron.value,							// The current value of the neuron
+		lastWeightedInput: neuron.lastWeightedInput,	// The last weighted input to the neuron
+		lastWeightedAverage: neuron.lastWeightedAverage,// The last weighted average of the inputs
 	} );
+
+	neuron.lastWeightedInput = weightedInput;
+	neuron.lastWeightedAverage = weightedAverage;
 }
 
 function connectNeuronInput ( neuron, input, weight = 1 ) {
@@ -73,7 +78,9 @@ function createNeuron( { type, initialValue } ) {
 		neuronType: NeuronDefinitions[ _type ].type,
 		inputs: [],
 		selfWeight: 0,
-		affects: NeuronDefinitions[ _type ].affects
+		affects: NeuronDefinitions[ _type ].affects,
+		lastWeightedInput: 0,
+		lastWeightedAverage: 0,
 	};
 }
 

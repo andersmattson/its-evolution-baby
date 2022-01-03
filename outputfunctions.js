@@ -17,9 +17,13 @@ registerNeuronDefinition( function( args ) {
 	return args.weightedInput / ( 1 + args.iteration );
 }, NeuronTypes.SYNAPSE, {}, 'WeightedInputDecay' );
 
-// registerNeuronDefinition( function( args ) {
-// 	return Math.sin( args.iteration * args.initialValue );
-// }, NeuronTypes.GENERATOR, {}, 'Oscillator' );
+registerNeuronDefinition( function( args ) {
+	return args.weightedInput - args.lastWeightedInput;
+}, NeuronTypes.SYNAPSE, {}, 'WeightedInputMemory' );
+
+registerNeuronDefinition( function( args ) {
+	return Math.sin( args.iteration * args.initialValue );
+}, NeuronTypes.GENERATOR, {}, 'Oscillator' );
 
 registerNeuronDefinition( function( args ) {
 	return args.initialValue / ( 1 + args.iteration );
@@ -61,12 +65,12 @@ registerNeuronDefinition( function( args ) {
 	return 1 / ( 1 + args.distanceToTarget );
 }, NeuronTypes.SENSORY, {}, 'InvertedTargetDistance' );
 
-registerNeuronDefinition( function( args ) {
-	return args.targetDirectionX;
-}, NeuronTypes.SENSORY, {}, 'TargetDirectionX' );
+// registerNeuronDefinition( function( args ) {
+// 	return args.targetDirectionX;
+// }, NeuronTypes.SENSORY, {}, 'TargetDirectionX' );
 
-registerNeuronDefinition( function( args ) {
-	return args.targetDirectionY;
-}, NeuronTypes.SENSORY, {}, 'TargetDirectionY' );
+// registerNeuronDefinition( function( args ) {
+// 	return args.targetDirectionY;
+// }, NeuronTypes.SENSORY, {}, 'TargetDirectionY' );
 
 export default {};
