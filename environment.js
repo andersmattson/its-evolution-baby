@@ -226,12 +226,12 @@ class Environment extends EventListener {
 		clearInterval( this.#interval );
 
 		const stats = this.stats;
+		stats.survivalRate = ( 100 * this.#generationLastSize / this.#numNetworks).toFixed( 2 );
 
 		if( !this.#waitForStart && this.#networks.length ) {
 			this.start();
 		}
 
-		stats.survivalRate = ( 100 * this.#generationLastSize / this.#numNetworks).toFixed( 2 );
 		this.dispatchEvent( 'generation', stats );
 
 	}

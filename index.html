@@ -170,7 +170,7 @@
 			<span class="noconnections">128</span>
 			<input type="range" min="1" max="255" value="128" class="num_connections slider"></input><br>
 		</div>
-		<div class="plot"></div>
+		<svg class="sparkline" width="320" height="50" stroke-width="0.5"></svg>
 		<h2>Result gen <span class="generation">-</span></h2>
 		ms per generation: <span class="duration">- </span>ms<br>
 		Size: <span class="size"></span><br>
@@ -241,31 +241,18 @@
 		<h3></h3>
 	</div>
 	<script type="module">
-		import * as d3 from 'https://d3js.org/d3.v7.min.js';
-		import * as Plot from "https://cdn.skypack.dev/@observablehq/plot@0.3";
+		import * as sparkline from './sparkline.js';
 		import { Environment } from './environment.js';
 		import Target from './target.js';
 
 		let plotData = new Array(100).fill(0);
-		let plot = Plot.lineY( plotData );
 
 		let plotOptions = {
-			height: 100,
-			margin: 0,
-			y: {
-				domain: [0, 100],
-			},
-			x: {
-				axis: null
-			},
-			style: {
-				background: "transparent"
-			}
+			spotRadius: 0,
+			max: 100
 		};
 
-		let lastPlot = plot.plot(plotOptions);
-
-		document.querySelector('.plot').appendChild( lastPlot );
+		sparkline.sparkline( document.querySelector(".sparkline"), plotData, plotOptions );
 
 		const environment = new Environment({ 
 			canvas: document.querySelector('.environment'),
@@ -281,7 +268,7 @@
 		environment.addTarget( new Target( environment, 0.5, 0.5, 0.2, '#ffff00', environment.renderScale ) );
 
 		environment.addEventListener( 'generation', ( stats ) => {
-			
+
 			const target = document.querySelector(".stats");
 			[ 
 				'generation', 
@@ -298,9 +285,8 @@
 
 			plotData.shift();
 			plotData.push( stats.survivalRate );
-			document.querySelector('.plot').removeChild(lastPlot);
-			lastPlot = plot.plot(plotOptions);
-			document.querySelector('.plot').appendChild(lastPlot);
+
+			sparkline.sparkline( document.querySelector(".sparkline"), plotData, plotOptions );
 		} );
 
 		environment.addEventListener( 'pause', ( state ) => {
