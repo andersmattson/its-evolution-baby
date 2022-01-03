@@ -285,7 +285,7 @@
 
 			plotData.shift();
 			plotData.push( stats.survivalRate );
-
+			// console.log( Math.min(...plotData), Math.max(...plotData) );
 			sparkline.sparkline( document.querySelector(".sparkline"), plotData, plotOptions );
 		} );
 
