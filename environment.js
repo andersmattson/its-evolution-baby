@@ -3,12 +3,10 @@ import { EventListener } from './eventlistener.js';
 
 class Environment extends EventListener {
 
-	#networks = [];
-	renderScale = { x: 1, y: 1, xRatio: 1, yRatio: 1 };
-	#networkOffset = {
-		x: -2,
-		y: -2
-	};
+	#networks = 			[];
+	#reps = 				[];
+	renderScale = 			{ x: 1, y: 1, xRatio: 1, yRatio: 1 };
+	#networkOffset = 		{ x: -2, y: -2 };
 
 	#canvas;
 	#interval = 			null;
@@ -84,16 +82,18 @@ class Environment extends EventListener {
 	}
 
 	initRepresentation() {
+		this.#reps = [];
 		for( let i = 0; i < this.#numNetworks; i++ ) {
 			let elem = document.createElement( 'div' );
 			elem.classList.add( 'network' );
 			elem.classList.add( `rep${i}` );
 			this.#canvas.appendChild( elem );
+			this.#reps.push( elem );
 		}
 	}
 
 	getRep( index ) {
-		return document.querySelector( `.rep${index}` );
+		return this.#reps[ index ]; //document.querySelector( `.rep${index}` );
 	}
 
 	addNetwork ( network ) {
@@ -243,8 +243,12 @@ class Environment extends EventListener {
 		target.getElement().style.height = ( target.radius * 2 * this.renderScale.y / this.renderScale.yRatio ) + 'px';
 	}
 
-	togglePause() {
-		this.#waitForStart = !this.#waitForStart;
+	togglePause( pause ) {
+		if( pause === undefined ) {
+			this.#waitForStart = !this.#waitForStart;
+		} else {
+			this.#waitForStart = pause;
+		}
 		if( !this.#waitForStart ) {
 			this.start();
 			this.dispatchEvent( 'pause', false );
@@ -271,7 +275,7 @@ class Environment extends EventListener {
 
 	updateStepDelay ( stepDelay ) {
 		this.#stepDelay = stepDelay || 0;
-
+		
 		clearInterval( this.#interval );
 
 		this.#interval = setInterval( () => {
@@ -280,6 +284,27 @@ class Environment extends EventListener {
 				this.stop();
 			}
 		}, this.#stepDelay);
+	}
+
+	pixelPosition( position ) {
+		return {
+			x: this.renderScale.x + position.x * this.renderScale.pixelScale,
+			y: this.renderScale.y + position.y * this.renderScale.pixelScale,
+		}
+	}
+
+	reset() {
+		let state = this.#waitForStart;
+		this.togglePause( true );
+		this.clearNetworks();
+		clearInterval( this.#interval );
+		this.#networks.length = 0;
+		this.#iteration = 0;
+		this.#generation = 0;
+		this.#evolution = 0;
+		this.#generationLastSize = 0;
+		this.initRandomNetworks();
+		this.togglePause( state );
 	}
 
 	get size() {
@@ -318,12 +343,36 @@ class Environment extends EventListener {
 		}
 	}
 
-	pixelPosition( position ) {
-		return {
-			x: this.renderScale.x + position.x * this.renderScale.pixelScale,
-			y: this.renderScale.y + position.y * this.renderScale.pixelScale,
-		}
+	get stepDelay() {
+		return this.#stepDelay;
 	}
+
+	get mutationRate() {
+		return this.#mutationRate;
+	}
+
+	set mutationRate( mutationRate ) {
+		this.#mutationRate = Math.min( 1, Math.max( 0, mutationRate ) );
+	}
+
+	get numNeurons() {
+		return this.#numNeurons;
+	}
+
+	set numNeurons( numNeurons ) {
+		this.#numNeurons = parseInt( numNeurons );
+		this.reset();
+	}
+
+	get numConnections() {
+		return this.#numConnections;
+	}
+
+	set numConnections( numConnections ) {
+		this.#numConnections = parseInt( numConnections );
+		this.reset();
+	}
+
 }
 
 export {

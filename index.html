@@ -56,6 +56,86 @@
 			padding: 30px;
 			box-sizing: border-box;
 		}
+
+		.sliderContainer {
+			padding: 7px 0;
+			display: flex;
+		}
+
+		.sliderContainer label {
+			flex: 1;
+		}
+
+		.sliderContainer span {
+			flex: 0.3;
+			text-align: right;
+		}
+
+		.slider {
+			direction: ltr;
+			height: 14px;
+			flex: 2;
+			-webkit-appearance: none;
+			height: 15px;
+			border-radius: 5px;
+			background: #d3d3d3;
+			outline: none;
+			opacity: 0.7;
+			-webkit-transition: .2s;
+			transition: opacity .2s;
+		}
+
+		.slider.reverse {
+			direction: rtl;
+		}
+
+		.slider::-webkit-slider-thumb {
+			-webkit-appearance: none;
+			appearance: none;
+			width: 25px;
+			height: 25px;
+			border-radius: 50%; 
+			background: #ffc000;
+			cursor: pointer;
+		}
+
+		.slider::-moz-range-thumb {
+			width: 25px;
+			height: 25px;
+			border-radius: 50%;
+			background: #ffc000;
+			cursor: pointer;
+		}
+
+		button {
+			margin: 0 5px 10px 0;
+			padding: 10px 12px;
+			border: 0;
+			background: #ffc000;
+			cursor: pointer;
+			font-size: 0.8rem;
+			border-radius: 5px;
+		}
+
+		.buttons {
+			display: flex;
+		}
+
+		.pausa {
+			flex: 0.5;
+		}
+
+		.render {
+			flex: 1.2;
+		}
+
+		.interactive {
+			flex: 1.5;
+		}
+
+		.plot {
+			margin-bottom: 20px;
+		}
 	</style>
 </head>
 <body>
@@ -64,19 +144,40 @@
 		<div class="environment"></div>
 	</div>
 	<div class="stats">
-		<h1>It's Evolution, baby!</h1>
-		<button class="pausa">Start</button>
-		<button class="render">Toggle render</button>
-		<button class="interactive">Toggle interactive</button><br>
-		<label for="stepDelay">Speed (ms):</label><input type="range" min="1" max="100" class="stepDelay"></input><br>
-		Generation: <span class="generation"></span><br>
-		ms per generation: <span class="duration"></span>ms<br>
-		Size: <span class="size"></span><br>
-		Survival rate: <span class="survivalRate"></span>%<br>
+		<h1>It's evolution, baby!</h1>
+		<div class="buttons">
+			<button class="pausa">Start</button>
+			<button class="render">Toggle render</button>
+			<button class="interactive">Toggle interactive</button><br>
+		</div>
+		<div class="sliderContainer">
+			<label for="stepDelay">Speed:</label>
+			<span class="speed">1.00</span>
+			<input type="range" min="1" max="100" value="1" class="stepDelay slider reverse"></input>
+		</div>
+		<div class="sliderContainer">
+			<label for="mutation_rate">Mutation:</label>
+			<span class="mutrate">0.50</span>
+			<input type="range" min="0" max="100" value="50" class="mutation_rate slider"></input><br>
+		</div>
+		<div class="sliderContainer">
+			<label for="num_neurons">Neurons: </label>
+			<span class="noneurons">128</span>
+			<input type="range" min="1" max="255" value="128" class="num_neurons slider"></input><br>
+		</div>
+		<div class="sliderContainer">
+			<label for="num_connections">Connections:</label>
+			<span class="noconnections">128</span>
+			<input type="range" min="1" max="255" value="128" class="num_connections slider"></input><br>
+		</div>
 		<div class="plot"></div>
+		<h2>Result gen <span class="generation">-</span></h2>
+		ms per generation: <span class="duration">- </span>ms<br>
+		Size: <span class="size"></span><br>
+		Survival rate: <span class="survivalRate">0</span>%<br>
 		<br>
-		Connected neurons total: <span class="connectedNeurons"></span><br>
-		Connected neurons avg: <span class="connectedNeuronsAvg"></span><br>
+		Connected neurons total: <span class="connectedNeurons">-</span><br>
+		Connected neurons avg: <span class="connectedNeuronsAvg">-</span><br>
 		<br>
 		Avg. distance traveled: <span class="avgDistanceTraveled"></span><br>
 		<br>
@@ -220,6 +321,30 @@
 
 		document.querySelector(".stepDelay").addEventListener( 'input', ( e ) => {
 			environment.updateStepDelay( e.target.value );
+			document.querySelector('.speed').innerHTML = (1 / environment.stepDelay).toFixed(2);
+		} );
+
+		document.querySelector(".mutation_rate").addEventListener( 'input', ( e ) => {
+			environment.mutationRate = parseInt( e.target.value ) / 100;
+			document.querySelector('.mutrate').innerHTML = environment.mutationRate.toFixed(2);
+		} );
+
+		document.querySelector(".num_neurons").addEventListener( 'change', ( e ) => {
+			if( confirm('This will reset the network.') ) {
+				environment.numNeurons = e.target.value;
+			} else {
+				e.target.value = environment.numNeurons;
+			}
+			document.querySelector('.noneurons').innerHTML = environment.numNeurons;
+		} );
+
+		document.querySelector(".num_connections").addEventListener( 'change', ( e ) => {
+			if( confirm('This will reset the network.') ) {
+				environment.numConnections = e.target.value;
+			} else {
+				e.target.value = environment.numConnections;
+			}
+			document.querySelector('.noconnections').innerHTML = environment.numConnections;
 		} );
 
 	</script>
