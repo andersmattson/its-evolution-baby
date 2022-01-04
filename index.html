@@ -5,7 +5,6 @@
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>Neurons</title>
-	<script src="https://d3js.org/d3.v7.min.js"></script>
 	<style>
 
 		html, body {
@@ -38,10 +37,14 @@
 
 		.stats {
 			position: absolute;
-			left: 30px;
-			top: 10px;
+			left: 0px;
+			top: 0px;
+			bottom: 0;
 			width: 320px;
 			z-index: 3;
+			padding: 20px;
+			box-sizing: content-box;
+			overflow-y: auto;
 		}
 
 		.explanations {
@@ -136,6 +139,46 @@
 		.plot {
 			margin-bottom: 20px;
 		}
+
+		.neuron_list {
+			background-color: white;
+			padding: 10px;
+		}
+
+		.hidden {
+			display: none;
+		}
+
+		.neuronDefinition {
+			display: flex;
+			transition: height 0.5s;
+			margin-bottom: 10px;
+		}
+
+		.neuronDefinition > * {
+			flex: 1;
+		}
+
+		.neuronDefinition > *:first-child {
+			flex: 0.05;
+		}
+
+		.neuronDefinitionDescription, .neuronDefinitionType {
+			color: #666666;
+			font-style: italic;
+			font-size: 0.9em;
+		}
+
+		.neuronDefinitionDescription {
+			color: #eea000;
+		}
+
+		.currentDNA {
+			overflow: hidden;
+			text-overflow: ellipsis;
+			width: 200px;
+		}
+		
 	</style>
 </head>
 <body>
@@ -170,11 +213,19 @@
 			<span class="noconnections">128</span>
 			<input type="range" min="1" max="255" value="128" class="num_connections slider"></input><br>
 		</div>
+		Neuron definitions: <span class="active_neuron_types"></span> of <span class="disabled_neuron_types"></span> used <a href="#" class="display_neurons">Change</a><br>
+		<div class="neuron_list hidden">
+			<div style="text-align: right">
+				<button class="hide_neurons" style="background-color: #ccc">Close</button>
+				<button class="apply_neurons">Apply</button>
+			</div>
+		</div>
 		<svg class="sparkline" width="320" height="50" stroke-width="0.5"></svg>
 		<h2>Result gen <span class="generation">-</span></h2>
 		ms per generation: <span class="duration">- </span>ms<br>
 		Size: <span class="size"></span><br>
 		Survival rate: <span class="survivalRate">0</span>%<br>
+		DNA example: <div class="currentDNA"></div><br>
 		<br>
 		Connected neurons total: <span class="connectedNeurons">-</span><br>
 		Connected neurons avg: <span class="connectedNeuronsAvg">-</span><br>
@@ -183,7 +234,7 @@
 		<br>
 		Data length: <span class="avgDnaLength"></span><br>
 	</div>
-	<div class="explanations">
+	<!--div class="explanations">
 		<h1>Explanations</h1>
 		<p>
 			Sooo, I understand all these red dots might need an explanation. If you're the kind of person that
@@ -239,100 +290,7 @@
 		<h2>Neuron types</h2>
 		Each individual neuron can be one of the following types:
 		<h3></h3>
-	</div>
-	<script type="module">
-		import * as sparkline from './sparkline.js';
-		import { Environment } from './environment.js';
-		import Target from './target.js';
-
-		let plotData = new Array(100).fill(0);
-
-		let plotOptions = {
-			spotRadius: 0,
-			max: 100
-		};
-
-		sparkline.sparkline( document.querySelector(".sparkline"), plotData, plotOptions );
-
-		const environment = new Environment({ 
-			canvas: document.querySelector('.environment'),
-			numNetworks: 400,
-			numNeurons: 128,
-			numConnections: 128,
-			mutationRate: 0.5,
-			waitForStart: true,
-			randomInitSpawn: true,
-			survivorsOnly: false,
-		} );
-
-		environment.addTarget( new Target( environment, 0.5, 0.5, 0.2, '#ffff00', environment.renderScale ) );
-
-		environment.addEventListener( 'generation', ( stats ) => {
-
-			const target = document.querySelector(".stats");
-			[ 
-				'generation', 
-				'survivalRate',
-				'size', 
-				'connectedNeuronsAvg',
-				'connectedNeurons',
-				'avgDistanceTraveled',
-				'avgDnaLength',
-				'duration'
-			].forEach( ( key ) => {
-				document.querySelector(`.stats .${key}`).innerHTML = stats[key];
-			} );
-
-			plotData.shift();
-			plotData.push( stats.survivalRate );
-			// console.log( Math.min(...plotData), Math.max(...plotData) );
-			sparkline.sparkline( document.querySelector(".sparkline"), plotData, plotOptions );
-		} );
-
-		environment.addEventListener( 'pause', ( state ) => {
-			document.querySelector('.pausa').innerHTML = state ? 'Start' : 'Pause';
-		} );
-
-		document.querySelector(".pausa").addEventListener( 'click', () => {
-			environment.togglePause();
-		} );
-
-		document.querySelector(".render").addEventListener( 'click', () => {
-			environment.toggleRender();
-		} );
-
-		document.querySelector(".interactive").addEventListener( 'click', () => {
-			environment.toggleInteractiveMode();
-		} );
-
-		document.querySelector(".stepDelay").addEventListener( 'input', ( e ) => {
-			environment.updateStepDelay( e.target.value );
-			document.querySelector('.speed').innerHTML = (1 / environment.stepDelay).toFixed(2);
-		} );
-
-		document.querySelector(".mutation_rate").addEventListener( 'input', ( e ) => {
-			environment.mutationRate = parseInt( e.target.value ) / 100;
-			document.querySelector('.mutrate').innerHTML = environment.mutationRate.toFixed(2);
-		} );
-
-		document.querySelector(".num_neurons").addEventListener( 'change', ( e ) => {
-			if( confirm('This will reset the network.') ) {
-				environment.numNeurons = e.target.value;
-			} else {
-				e.target.value = environment.numNeurons;
-			}
-			document.querySelector('.noneurons').innerHTML = environment.numNeurons;
-		} );
-
-		document.querySelector(".num_connections").addEventListener( 'change', ( e ) => {
-			if( confirm('This will reset the network.') ) {
-				environment.numConnections = e.target.value;
-			} else {
-				e.target.value = environment.numConnections;
-			}
-			document.querySelector('.noconnections').innerHTML = environment.numConnections;
-		} );
-
-	</script>
+	</div-->
+	<script type="module" src="./main.js"></script>
 </body>
 </html>

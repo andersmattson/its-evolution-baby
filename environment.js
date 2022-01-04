@@ -1,5 +1,6 @@
-import { Network } from './network.js';
+import * as Network from './network.js';
 import { EventListener } from './eventlistener.js';
+import { numberToDnaSequence, dnaSequenceToNumbers } from './helpers.js';
 
 class Environment extends EventListener {
 
@@ -27,6 +28,8 @@ class Environment extends EventListener {
 	#survivorsOnly = 		false;
 	#targets = 				[];
 	#interactiveMode = 		false;
+	#firstDNA = 			null;
+	#currentDNA = 			null;
 
 	constructor( { 
 		canvas, 
@@ -140,11 +143,23 @@ class Environment extends EventListener {
 		this.#evolution++;
 
 		let dna = Network.randomDNA( this.#numNeurons, this.#numConnections );
+		this.#firstDNA = dna;
+
 		for ( let i = 0; i < this.#numNetworks; i++ ) {
 			if( this.#randomInitSpawn ) {
 				dna = Network.randomDNA( this.#numNeurons, this.#numConnections );
 			}
-			this.addNetwork( new Network( { dna, renderScale: this.renderScale } ) );
+			this.addNetwork( Network.createNetwork( dna, this.renderScale ) );
+		}
+	}
+
+	initNetworksFromDnaSequence ( dna ) {
+
+		this.reset();
+		this.#firstDNA = dnaSequenceToNumbers( dna );
+
+		for ( let i = 0; i < this.#numNetworks; i++ ) {
+			this.addNetwork( Network.createNetwork( this.#firstDNA, this.renderScale ) );
 		}
 	}
 
@@ -165,6 +180,7 @@ class Environment extends EventListener {
 
 			if( survived ) {
 				this.#generationLastSize++;
+				this.#currentDNA = network.dna;
 			}
 
 			let offsprings = survived + ( this.#survivorsOnly ? 0 : 1 );
@@ -176,7 +192,7 @@ class Environment extends EventListener {
 		} );
 
 		while ( networks.length < this.#numNetworks ) {
-			networks.push( this.#networks[ networkIndex[ Math.floor( Math.random() * networkIndex.length ) ] ].clone( this.#mutationRate ) );
+			networks.push( Network.clone( this.#networks[ networkIndex[ Math.floor( Math.random() * networkIndex.length ) ] ], this.#mutationRate ) );
 		}
 		
 		this.clearNetworks();
@@ -195,7 +211,7 @@ class Environment extends EventListener {
 		} );
 		
 		for ( let i = 0, l = this.#networks.length; i < l; i++ ) {
-			this.#networks[ i ].step( { targets: this.#targets } );
+			Network.stepNetwork( this.#networks[ i ], this.#targets );
 		};
 
 		this.#iteration++;
@@ -322,7 +338,7 @@ class Environment extends EventListener {
 			if( network.position.x !== network.initialPosition.x && network.position.y !== network.initialPosition.y ) {
 				hasMoved2D++;
 			}
-			connectedNeurons += network.numConnectedNeurons;
+			connectedNeurons += network.connectedNeurons.length;
 			totalDistanceTraveled += network.totalDistanceTraveled;
 			totalDnaLength += network.dna.length;
 
@@ -340,6 +356,7 @@ class Environment extends EventListener {
 			avgDnaLength: ( totalDnaLength / this.#networks.length ).toFixed( 2 ) * 1,
 			totalDnaLength: totalDnaLength,
 			duration: ( Date.now() - this.#iterationStartTime ),
+			currentDNA: numberToDnaSequence( this.#currentDNA )
 		}
 	}
 

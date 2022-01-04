@@ -3,30 +3,6 @@ import {} from './outputfunctions.js';
 import { NeuronDefinitions } from './neuron.js';
 import Constants from './constants.js';
 
-function structToDNA( struct ) {
-	
-	let ret = '';
-
-	let numNeurons = struct.neurons.length;
-	let numConnections = struct.connections.length;
-	ret += fillValue( numNeurons.toString( Constants.DNA_BASE ), Constants.NEURON_INDEX_LENGTH );
-	ret += fillValue( numConnections.toString( Constants.DNA_BASE ), Constants.CONNECTION_INDEX_LENGTH );
-
-	for( let i = 0; i < numNeurons; i++ ){
-		let n = struct.neurons[i];
-		ret += fillValue( ( n.type ).toString( Constants.DNA_BASE ), Constants.NEURON_TYPE_LENGTH );
-		ret += fillValue( Math.min( Constants.NEURON_DATA_MIDDLE * 2 - 1, Math.round( n.initialValue * Constants.NEURON_DATA_MIDDLE + Constants.NEURON_DATA_MIDDLE )).toString( Constants.DNA_BASE ), Constants.NEURON_DATA_LENGTH );
-	}
-	for( let i = 0; i < numConnections; i++ ){
-		let n = struct.connections[i];
-		ret += fillValue( ( n.input ).toString( Constants.DNA_BASE ), Constants.NEURON_INDEX_LENGTH );
-		ret += fillValue( ( n.output ).toString( Constants.DNA_BASE ), Constants.NEURON_INDEX_LENGTH );
-		ret += fillValue( Math.min( Constants.NEURON_DATA_MIDDLE * 2 - 1, Math.round( n.weight * Constants.NEURON_DATA_MIDDLE + Constants.NEURON_DATA_MIDDLE )).toString( Constants.DNA_BASE ), Constants.CONNECTION_DATA_LENGTH );
-	}
-	return ret;
-
-}
-
 function randomInt( min = 0, max = 1 ) {
 	return Math.floor( Math.random() * ( max - min + 1 ) ) + min;
 }
@@ -41,7 +17,7 @@ function fillValue( value, length ) {
 		 
 }
 
-function randomDNA( numNeurons, numConnections ) {
+export function randomDNA( numNeurons, numConnections ) {
 	let ret = '';
 	let numNeuronsStr = numNeurons.toString( Constants.DNA_BASE );
 	let numConnectionsStr = numConnections.toString( Constants.DNA_BASE );
@@ -61,195 +37,149 @@ function randomDNA( numNeurons, numConnections ) {
 	return ret;
 }
 
-class Network {
-	
-	neurons = [];
-	#_connectedNeurons = new Set();
-	#connectedNeurons = [];
-	iteration = 0;
-	position = { x: 0, y: 0 };
-	initialPosition = { x: 0, y: 0 };
-	renderScale = { x: 1, y: 1, xRatio: 1, yRatio: 1 };
-	dna = '';
-	totalDistanceTraveled = 0;
+export function createNetwork( dna, renderScale ) {
 
-	constructor ( { dna, renderScale } ) {
-
-		this.renderScale = renderScale;
-
-		if( dna ){
-			this.dna = dna;
-			this.setupFromDNA();
-		}
-
-		this.setRandomPosition();
+	let network = {
+		neurons: [],
+		_connectedNeurons: new Set(),
+		connectedNeurons: [],
+		iteration: 0,
+		position: { x: 2 * ( Math.random() - 0.5 ) * renderScale.xRatio, y: 2 * ( Math.random() - 0.5 ) * renderScale.yRatio },
+		direction: Math.random() * 2 * Math.PI,
+		speed: 0,
+		initialPosition: { x: 0, y: 0 },
+		renderScale: { x: 1, y: 1, xRatio: 1, yRatio: 1 },
+		dna: dna,
+		totalDistanceTraveled: 0,
+		renderScale: renderScale,
 	}
 
-	setupFromDNA () {
+	network.initialPosition = { ...network.position };
+	setupFromDNA( network, dna );
 
-		let numNeurons = parseInt( this.dna.substring( 0, Constants.NEURON_INDEX_LENGTH ), Constants.DNA_BASE );
-		let numConnections = parseInt( this.dna.substring( Constants.NEURON_INDEX_LENGTH, Constants.NEURON_INDEX_LENGTH + Constants.CONNECTION_INDEX_LENGTH ), Constants.DNA_BASE );
-	
-		for( let i = 0; i < numNeurons; i++ ){
-			let idx = Constants.NEURON_INDEX_LENGTH + Constants.CONNECTION_INDEX_LENGTH + i * Constants.NEURON_TOTAL_LENGTH;
-			let type = parseInt( this.dna.substring( idx, idx + Constants.NEURON_TYPE_LENGTH ), Constants.DNA_BASE );
-			let initialValue = ( parseInt( this.dna.substring( idx + Constants.NEURON_TYPE_LENGTH, idx + Constants.NEURON_TOTAL_LENGTH ), Constants.DNA_BASE ) - Constants.NEURON_DATA_MIDDLE ) / Constants.NEURON_DATA_MIDDLE;
+	return network;
+}
 
-			if( type < NeuronDefinitions.length ) {
-				this.addNeuron( createNeuron({ initialValue, type }) );
+export function connectNeurons ( network, input, output, weight = 1 ) {
+	if ( input.isNeuron && output.isNeuron ) {
+		const result = connectNeuronInput( output, input, weight );
+		if ( result ) {
+			if( !network._connectedNeurons.has( input ) ) {
+				network._connectedNeurons.add( input );
+				network.connectedNeurons.push( input );
+			}
+			if( !network._connectedNeurons.has( output ) ) {
+				network._connectedNeurons.add( output );
+				network.connectedNeurons.push( output );
 			}
 		}
-	
-		for( let i = 0; i < numConnections; i++ ){
-			let idx = Constants.NEURON_INDEX_LENGTH + Constants.CONNECTION_INDEX_LENGTH + numNeurons * Constants.NEURON_TOTAL_LENGTH + i * Constants.CONNECTION_TOTAL_LENGTH;
-	
-			let input = parseInt( this.dna.substring( idx, idx + Constants.NEURON_INDEX_LENGTH ), Constants.DNA_BASE );
-			let output = parseInt( this.dna.substring( idx + Constants.NEURON_INDEX_LENGTH, idx + Constants.NEURON_INDEX_LENGTH + Constants.CONNECTION_INDEX_LENGTH ), Constants.DNA_BASE );
-			let weight = ( parseInt( this.dna.substring( idx + Constants.NEURON_INDEX_LENGTH + Constants.CONNECTION_INDEX_LENGTH, idx + Constants.CONNECTION_TOTAL_LENGTH ), Constants.DNA_BASE ) - Constants.NEURON_DATA_MIDDLE ) / Constants.NEURON_DATA_MIDDLE;
-
-			if( this.neurons[ input ] && this.neurons[ output ] ) {
-				this.connect( this.neurons[ input ], this.neurons[ output ], weight );
-			}
-		}
-	}
-
-	setRandomPosition() {
-		this.position = { x: 2 * ( Math.random() - 0.5 ) * this.renderScale.xRatio, y: 2 * ( Math.random() - 0.5 ) * this.renderScale.yRatio };
-		this.initialPosition = { ...this.position };
-	}
-
-	static randomDNA ( maxNeurons, maxConnections ) {
-		return randomDNA( maxNeurons, maxConnections );
-	}
-
-	cloneDNA ( mutate = 0.01 ) {
-		let chance = Math.random();
-		let dna = this.DNA;
-
-		if ( chance < mutate ) {
-			let index = randomInt( Constants.NEURON_INDEX_LENGTH + Constants.CONNECTION_INDEX_LENGTH, dna.length - 1 );
-			dna = dna.substring( 0, index - 1 ) + randomInt( 0, Constants.DNA_BASE - 1 ) + dna.substring( index );
-		}
-
-		return dna;
-	}
-
-	clone ( mutate = 0.01 ) {
-		let dna = this.cloneDNA( mutate );
-		return new Network( { dna, renderScale: this.renderScale } );
-	}
-
-	get DNA () {
-		return this.dna || structToDNA( this.toStruct() );
-	}
-
-	toStruct() {
-		let ret = {
-			neurons: [],
-			connections: []
-		};
-		for ( let i = 0; i < this.neurons.length; i++ ) {
-			let { type, initialValue } = this.neurons[i];
-			ret.neurons.push( { type, initialValue } );
-
-			let connections = [];
-
-			for ( let j = 0; j < this.neurons[i].inputs.length; j++ ) {
-				let { weight, input } = this.neurons[i].inputs[j];
-				let inputIndex = this.neurons.indexOf( input );
-				connections.push( { input: inputIndex, output: i, weight } );
-			}
-
-			ret.connections = [...ret.connections, ...connections];
-		}
-		return ret;
-	}
-
-	addNeuron( neuron = null ) {
-		this.neurons.push( neuron );
-	}
-
-	connect ( input, output, weight = 1 ) {
-		if ( input.isNeuron && output.isNeuron ) {
-			const result = connectNeuronInput( output, input, weight );
-			if ( result ) {
-				if( !this.#_connectedNeurons.has( input ) ) {
-					this.#_connectedNeurons.add( input );
-					this.#connectedNeurons.push( input );
-				}
-				if( !this.#_connectedNeurons.has( output ) ) {
-					this.#_connectedNeurons.add( output );
-					this.#connectedNeurons.push( output );
-				}
-			}
-			return result;
-		} else {
-			return false;
-		}
-	}
-
-	step( { targets } ) {
-		this.iteration++;
-		let currentPosition = { x: this.position.x, y: this.position.y };
-		let moveX = 0;
-		let moveY = 0;
-		let smallestDistance = Infinity;
-		let closestTargetDirection = { x: 0, y: 0 };
-
-		for ( let i = 0; i < targets.length; i++ ) {
-			let distance = targets[i].distance( this.position );
-			if ( distance < smallestDistance ) {
-				smallestDistance = distance;
-				closestTargetDirection = { 
-					x: targets[i].x - this.position.x, 
-					y: targets[i].y - this.position.y
-				};
-			}
-		}
-
-		closestTargetDirection = { 
-			x: closestTargetDirection.x > 0 ? 1 : -1, 
-			y: closestTargetDirection.y > 0 ? 1 : -1
-		};
-
-		for ( let i = 0, l = this.#connectedNeurons.length; i < l; i++ ) {
-
-			stepNeuron( this.#connectedNeurons[i], { 
-				iteration: this.iteration,
-				position: this.position,
-				distanceToTarget: smallestDistance,
-				targetDirectionX: closestTargetDirection.x,
-				targetDirectionY: closestTargetDirection.y,
-			} );
-
-			if( this.#connectedNeurons[i].affects.x ) {
-				moveX += this.#connectedNeurons[i].value;
-			}
-			if( this.#connectedNeurons[i].affects.y ) {
-				moveY += this.#connectedNeurons[i].value;
-			}
-		}
-
-		this.position.x += (moveX >= 0 ? Math.min( moveX, Constants.MAXIMUM_MOVING_DISTANCE ) : Math.max( moveX, -Constants.MAXIMUM_MOVING_DISTANCE ));
-		this.position.y += (moveY >= 0 ? Math.min( moveY, Constants.MAXIMUM_MOVING_DISTANCE ) : Math.max( moveY, -Constants.MAXIMUM_MOVING_DISTANCE ));
-
-		this.position.x = Math.min( Math.max( this.position.x, -this.renderScale.xRatio ), this.renderScale.xRatio );
-		this.position.y = Math.min( Math.max( this.position.y, -this.renderScale.yRatio ), this.renderScale.yRatio );
-
-		if( moveX !== 0 || moveY !== 0 ) {
-			this.totalDistanceTraveled += Math.sqrt( Math.pow( this.position.x - currentPosition.x, 2 ) + Math.pow( this.position.y - currentPosition.y, 2 ) );
-		}
-	}
-
-	get travelDistance() {
-		return Math.sqrt( Math.pow( this.initialPosition.x - this.position.x, 2 ) + Math.pow( this.initialPosition.y - this.position.y, 2 ) );
-	}
-
-	get numConnectedNeurons() {
-		return this.#connectedNeurons.length;
+		return result;
+	} else {
+		return false;
 	}
 }
 
-export {
-	Network
+
+function setupFromDNA ( network, dna ) {
+
+	let numNeurons = parseInt( dna.substring( 0, Constants.NEURON_INDEX_LENGTH ), Constants.DNA_BASE );
+	let numConnections = parseInt( dna.substring( Constants.NEURON_INDEX_LENGTH, Constants.NEURON_INDEX_LENGTH + Constants.CONNECTION_INDEX_LENGTH ), Constants.DNA_BASE );
+
+	for( let i = 0; i < numNeurons; i++ ){
+		let idx = Constants.NEURON_INDEX_LENGTH + Constants.CONNECTION_INDEX_LENGTH + i * Constants.NEURON_TOTAL_LENGTH;
+		let type = parseInt( dna.substring( idx, idx + Constants.NEURON_TYPE_LENGTH ), Constants.DNA_BASE );
+		let initialValue = ( parseInt( dna.substring( idx + Constants.NEURON_TYPE_LENGTH, idx + Constants.NEURON_TOTAL_LENGTH ), Constants.DNA_BASE ) - Constants.NEURON_DATA_MIDDLE ) / Constants.NEURON_DATA_MIDDLE;
+
+		if( type < NeuronDefinitions.length ) {
+			network.neurons.push( createNeuron({ initialValue, type }) );
+		}
+	}
+
+	for( let i = 0; i < numConnections; i++ ){
+		let idx = Constants.NEURON_INDEX_LENGTH + Constants.CONNECTION_INDEX_LENGTH + numNeurons * Constants.NEURON_TOTAL_LENGTH + i * Constants.CONNECTION_TOTAL_LENGTH;
+
+		let input = parseInt( dna.substring( idx, idx + Constants.NEURON_INDEX_LENGTH ), Constants.DNA_BASE );
+		let output = parseInt( dna.substring( idx + Constants.NEURON_INDEX_LENGTH, idx + Constants.NEURON_INDEX_LENGTH + Constants.CONNECTION_INDEX_LENGTH ), Constants.DNA_BASE );
+		let weight = ( parseInt( dna.substring( idx + Constants.NEURON_INDEX_LENGTH + Constants.CONNECTION_INDEX_LENGTH, idx + Constants.CONNECTION_TOTAL_LENGTH ), Constants.DNA_BASE ) - Constants.NEURON_DATA_MIDDLE ) / Constants.NEURON_DATA_MIDDLE;
+
+		if( network.neurons[ input ] && network.neurons[ output ] ) {
+			connectNeurons( network, network.neurons[ input ], network.neurons[ output ], weight );
+		}
+	}
+}
+
+export function clone ( network, mutate = 0.01 ) {
+	let chance = Math.random();
+	let dna = network.dna;
+
+	if ( chance < mutate ) {
+		let index = randomInt( Constants.NEURON_INDEX_LENGTH + Constants.CONNECTION_INDEX_LENGTH, network.dna.length - 1 );
+		dna = network.dna.substring( 0, index - 1 ) + randomInt( 0, Constants.DNA_BASE - 1 ) + network.dna.substring( index );
+	}
+
+	return createNetwork( dna, network.renderScale );
+}
+
+export function stepNetwork( network, targets ) {
+	network.iteration++;
+	let currentPosition = { x: network.position.x, y: network.position.y };
+	let moveX = 0;
+	let moveY = 0;
+	let smallestDistance = Infinity;
+	let closestTargetDirection = { x: 0, y: 0 };
+
+	for ( let i = 0; i < targets.length; i++ ) {
+		let distance = targets[i].distance( network.position );
+		if ( distance < smallestDistance ) {
+			smallestDistance = distance;
+			closestTargetDirection = { 
+				x: targets[i].x - network.position.x, 
+				y: targets[i].y - network.position.y
+			};
+		}
+	}
+
+	closestTargetDirection = { 
+		x: closestTargetDirection.x > 0 ? 1 : -1, 
+		y: closestTargetDirection.y > 0 ? 1 : -1
+	};
+
+	for ( let i = 0, l = network.connectedNeurons.length; i < l; i++ ) {
+
+		stepNeuron( network.connectedNeurons[i], { 
+			iteration: network.iteration,
+			position: network.position,
+			direction: network.direction,
+			speed: network.speed,
+			distanceToTarget: smallestDistance,
+			targetDirectionX: closestTargetDirection.x,
+			targetDirectionY: closestTargetDirection.y,
+		} );
+
+		if( network.connectedNeurons[i].affects.x ) {
+			moveX += network.connectedNeurons[i].value;
+		}
+		if( network.connectedNeurons[i].affects.y ) {
+			moveY += network.connectedNeurons[i].value;
+		}
+		if( network.connectedNeurons[i].affects.direction ) {
+			network.direction += network.connectedNeurons[i].value;
+		}
+		if( network.connectedNeurons[i].affects.speed ) {
+			network.speed += network.connectedNeurons[i].value;
+		}
+	}
+
+	moveX += network.speed * Math.cos( network.direction );
+	moveY += network.speed * Math.sin( network.direction );
+
+	network.position.x += (moveX >= 0 ? Math.min( moveX, Constants.MAXIMUM_MOVING_DISTANCE ) : Math.max( moveX, -Constants.MAXIMUM_MOVING_DISTANCE ));
+	network.position.y += (moveY >= 0 ? Math.min( moveY, Constants.MAXIMUM_MOVING_DISTANCE ) : Math.max( moveY, -Constants.MAXIMUM_MOVING_DISTANCE ));
+
+	network.position.x = Math.min( Math.max( network.position.x, -network.renderScale.xRatio ), network.renderScale.xRatio );
+	network.position.y = Math.min( Math.max( network.position.y, -network.renderScale.yRatio ), network.renderScale.yRatio );
+
+	if( moveX !== 0 || moveY !== 0 ) {
+		network.totalDistanceTraveled += Math.sqrt( Math.pow( network.position.x - currentPosition.x, 2 ) + Math.pow( network.position.y - currentPosition.y, 2 ) );
+	}
 }
