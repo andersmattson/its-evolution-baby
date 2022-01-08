@@ -23,6 +23,34 @@ function updateNeuronDefinitions() {
 	$('.disabled_neuron_types').innerText = DisabledNeuronDefinitions.length + NeuronDefinitions.length;
 }
 
+function updateStats( stats){
+
+	stats = stats || environment.stats;
+	const target = $(".stats");
+	[ 
+		'generation', 
+		'survivalRate',
+		'size', 
+		'connectedNeuronsAvg',
+		'connectedNeurons',
+		'avgDistanceTraveled',
+		'avgDnaLength',
+		'duration',
+		'targetAreaRatio'
+	].forEach( ( key ) => {
+		$(`.stats .${key}`).innerHTML = stats[key];
+	} );
+
+	if( $('.currentDNA') !== document.activeElement ) {
+		$('.currentDNA').innerHTML = stats.currentDNA;
+	}
+
+	plotData.shift();
+	plotData.push( stats.survivalRate );
+
+	sparkline.sparkline( $(".sparkline"), plotData, plotOptions );
+}
+
 let list = $('.neuron_list');
 Object.keys( NeuronDefinitionMap ).forEach( def => {
 	let neuron = NeuronDefinitionMap[def];
@@ -33,7 +61,7 @@ Object.keys( NeuronDefinitionMap ).forEach( def => {
 	<div>	
 		<div class="neuronDefinitionName">${def}</div>
 		<div class="neuronDefinitionType">Type: ${NeuronTypeNames[neuron.type]}, affects: ${Object.keys(neuron.affects).join() || 'none'}</div>
-		<div class="neuronDefinitionDescription">${NeuronDefinitionMap[def].description}</div>
+		<div class="neuronDefinitionDescription">f=${NeuronDefinitionMap[def].description}</div>
 	</div>`;
 	list.appendChild( elem );
 });
@@ -83,28 +111,9 @@ const environment = new Environment({
 
 environment.addTarget( new Target( environment, 0.5, 0.5, 0.2, '#ffff00', environment.renderScale ) );
 
-environment.addEventListener( 'generation', ( stats ) => {
-
-	const target = $(".stats");
-	[ 
-		'generation', 
-		'survivalRate',
-		'size', 
-		'connectedNeuronsAvg',
-		'connectedNeurons',
-		'avgDistanceTraveled',
-		'avgDnaLength',
-		'duration',
-		'currentDNA'
-	].forEach( ( key ) => {
-		$(`.stats .${key}`).innerHTML = stats[key];
-	} );
-
-	plotData.shift();
-	plotData.push( stats.survivalRate );
-	// console.log( Math.min(...plotData), Math.max(...plotData) );
-	sparkline.sparkline( $(".sparkline"), plotData, plotOptions );
-} );
+environment.addEventListener( 'generation', updateStats );
+environment.addEventListener( 'reset', updateStats );
+environment.dispatchEvent( 'reset' );
 
 environment.addEventListener( 'pause', ( state ) => {
 	$('.pausa').innerHTML = state ? 'Start' : 'Pause';
@@ -121,10 +130,30 @@ $(".stepDelay").addEventListener( 'input', ( e ) => {
 	$('.speed').innerHTML = environment.stepDelay;
 } );
 
+$(".speed_reset").addEventListener( 'click', ( e ) => {
+	environment.updateStepDelay( 16 );
+	$(".stepDelay").value = 16;
+	$('.speed').innerHTML = environment.stepDelay;
+} );
+
 $(".mutation_rate").addEventListener( 'input', ( e ) => {
 	environment.mutationRate = parseInt( e.target.value ) / 100;
 	$('.mutrate').innerHTML = environment.mutationRate.toFixed(2);
 } );
+
+$(".num_networks").addEventListener( 'change', ( e ) => {
+	if( confirm('This will reset the network.') ) {
+		environment.numNetworks = e.target.value;
+	} else {
+		e.target.value = environment.numNetworks;
+	}
+	$('.nonetworks').innerHTML = environment.numNetworks;
+} );
+
+$(".num_networks").addEventListener( 'input', ( e ) => {
+	$('.nonetworks').innerHTML = e.target.value;
+} );
+
 
 $(".num_neurons").addEventListener( 'change', ( e ) => {
 	if( confirm('This will reset the network.') ) {
@@ -135,6 +164,10 @@ $(".num_neurons").addEventListener( 'change', ( e ) => {
 	$('.noneurons').innerHTML = environment.numNeurons;
 } );
 
+$(".num_neurons").addEventListener( 'input', ( e ) => {
+	$('.noneurons').innerHTML = e.target.value;
+} );
+
 $(".num_connections").addEventListener( 'change', ( e ) => {
 	if( confirm('This will reset the network.') ) {
 		environment.numConnections = e.target.value;
@@ -143,3 +176,33 @@ $(".num_connections").addEventListener( 'change', ( e ) => {
 	}
 	$('.noconnections').innerHTML = environment.numConnections;
 } );
+
+$(".num_connections").addEventListener( 'input', ( e ) => {
+	$('.noconnections').innerHTML = e.target.value;
+} );
+
+$(".max_iter").addEventListener( 'input', ( e ) => {
+	environment.maxIterations = e.target.value;
+	$('.noiter').innerHTML = environment.maxIterations;
+} );
+
+$(".iter_reset").addEventListener( 'click', ( e ) => {
+	environment.maxIterations = 100;
+	$(".max_iter").value = 100;
+	$('.noiter').innerHTML = environment.maxIterations;
+});
+
+let timeout;
+$(".currentDNA").addEventListener( 'input', ( e ) => {
+	if( environment.generation === 0 && environment.iteration === 0 ) {
+		if( timeout ) {
+			clearTimeout( timeout );
+		}
+		timeout = setTimeout( () => {
+			environment.initNetworksFromDnaSequence( e.target.value );
+			
+			$(".connectedNeurons").innerHTML = environment.stats.connectedNeurons;
+			$(".connectedNeuronsAvg").innerHTML = environment.stats.connectedNeuronsAvg;
+		}, 1000 );
+	}
+});

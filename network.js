@@ -122,27 +122,24 @@ export function clone ( network, mutate = 0.01 ) {
 
 export function stepNetwork( network, targets ) {
 	network.iteration++;
-	let currentPosition = { x: network.position.x, y: network.position.y };
-	let moveX = 0;
-	let moveY = 0;
 	let smallestDistance = Infinity;
-	let closestTargetDirection = { x: 0, y: 0 };
+	let closestTargetDirectionCoords = { x: 0, y: 0 };
+	let targetDirection = 0;
+	let direction = 0;
+	let speed = 0;
 
 	for ( let i = 0; i < targets.length; i++ ) {
 		let distance = targets[i].distance( network.position );
 		if ( distance < smallestDistance ) {
 			smallestDistance = distance;
-			closestTargetDirection = { 
+			closestTargetDirectionCoords = { 
 				x: targets[i].x - network.position.x, 
 				y: targets[i].y - network.position.y
 			};
 		}
 	}
 
-	closestTargetDirection = { 
-		x: closestTargetDirection.x > 0 ? 1 : -1, 
-		y: closestTargetDirection.y > 0 ? 1 : -1
-	};
+	targetDirection = Math.atan2( closestTargetDirectionCoords.y, closestTargetDirectionCoords.x );
 
 	for ( let i = 0, l = network.connectedNeurons.length; i < l; i++ ) {
 
@@ -152,34 +149,24 @@ export function stepNetwork( network, targets ) {
 			direction: network.direction,
 			speed: network.speed,
 			distanceToTarget: smallestDistance,
-			targetDirectionX: closestTargetDirection.x,
-			targetDirectionY: closestTargetDirection.y,
+			targetDirection: targetDirection,
 		} );
 
-		if( network.connectedNeurons[i].affects.x ) {
-			moveX += network.connectedNeurons[i].value;
-		}
-		if( network.connectedNeurons[i].affects.y ) {
-			moveY += network.connectedNeurons[i].value;
-		}
 		if( network.connectedNeurons[i].affects.direction ) {
-			network.direction += network.connectedNeurons[i].value;
+			direction += network.connectedNeurons[i].value;
 		}
 		if( network.connectedNeurons[i].affects.speed ) {
-			network.speed += network.connectedNeurons[i].value;
+			speed += network.connectedNeurons[i].value;
 		}
 	}
 
-	moveX += network.speed * Math.cos( network.direction );
-	moveY += network.speed * Math.sin( network.direction );
-
-	network.position.x += (moveX >= 0 ? Math.min( moveX, Constants.MAXIMUM_MOVING_DISTANCE ) : Math.max( moveX, -Constants.MAXIMUM_MOVING_DISTANCE ));
-	network.position.y += (moveY >= 0 ? Math.min( moveY, Constants.MAXIMUM_MOVING_DISTANCE ) : Math.max( moveY, -Constants.MAXIMUM_MOVING_DISTANCE ));
+	network.direction += Math.max( -Constants.ANGLE_LIMIT, Math.min( Constants.ANGLE_LIMIT, direction ) );
+	network.speed = Math.max( 0, Math.min( Constants.MAXIMUM_MOVING_DISTANCE, network.speed + speed ) );
+	network.position.x += network.speed * Math.cos( network.direction );
+	network.position.y += network.speed * Math.sin( network.direction );
 
 	network.position.x = Math.min( Math.max( network.position.x, -network.renderScale.xRatio ), network.renderScale.xRatio );
 	network.position.y = Math.min( Math.max( network.position.y, -network.renderScale.yRatio ), network.renderScale.yRatio );
 
-	if( moveX !== 0 || moveY !== 0 ) {
-		network.totalDistanceTraveled += Math.sqrt( Math.pow( network.position.x - currentPosition.x, 2 ) + Math.pow( network.position.y - currentPosition.y, 2 ) );
-	}
+	network.totalDistanceTraveled += network.speed;
 }

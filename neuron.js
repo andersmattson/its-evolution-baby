@@ -68,8 +68,7 @@ function stepNeuron ( neuron, args ) {
 		time: args.iteration, 						// Think of this as the time
 		position: args.position, 						// Think of this as the sight
 		distanceToTarget: args.distanceToTarget,		// Think of this as the strength of a scent
-		targetDirectionX: args.targetDirectionX,		// The direction from where the scent is coming
-		targetDirectionY: args.targetDirectionY,		// The direction from where the scent is coming
+		targetDirection: args.targetDirection,			// The direction the scent is coming from
 		initialValue: neuron.initialValue,				// The initial value of the neuron, this comes from the DNA
 		weightedInput,									// The weighted input to the neuron
 		weightedAverage,								// The weighted average of the inputs
@@ -104,8 +103,6 @@ function createNeuron( { type, initialValue } ) {
 		type: _type,
 		initialValue: _initialValue,
 		value: _initialValue,
-		// nextValue: 0,
-		// previousValue: _initialValue,
 		iteration: 0,
 		neuronType: NeuronDefinitions[ _type ].type,
 		inputs: [],

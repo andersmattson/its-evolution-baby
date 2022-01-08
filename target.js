@@ -9,12 +9,16 @@ class Target {
 	#dragStartCoords;
 	#dragStartXY;
 
+	area = 0;
+
 	constructor ( environment, x, y, radius, color ) {
 		this.x = x;
 		this.y = y;
 		this.radius = radius;
 		this.color = color;
 		this.#environment = environment;
+
+		this.area = Math.PI * this.radius * this.radius;
 
 		this.elem = document.createElement( 'div' );
 		this.elem.className = 'target';

@@ -13,12 +13,16 @@
 			height: 100%;
 			overflow: hidden;
 			font-family: Arial, Helvetica, sans-serif;
+			background-color: rgb( 230, 230, 230 );
 		}
 		.network {
-			width: 5px;
+			width: 10px;
 			height: 5px;
 			position: absolute;
 			background-color: rgb(255, 0, 0);
+			border-radius: 3px;
+			border-right: 3px solid rgb(0, 0, 0);
+			box-sizing: border-box;
 		}
 		.environmentContainer {
 			position: absolute;
@@ -29,7 +33,6 @@
 		.environment {
 			width: 100%;
 			height: 100%;
-			background-color: rgba( 0, 0, 0, 0.1 );
 			position: absolute;
 			z-index: 2;
 			pointer-events: none;
@@ -45,6 +48,9 @@
 			padding: 20px;
 			box-sizing: content-box;
 			overflow-y: auto;
+			backdrop-filter: blur(3px);
+			-webkit-backdrop-filter: blur(3px);
+			background-color: rgba( 230, 230, 230,0.6 );
 		}
 
 		.explanations {
@@ -174,9 +180,16 @@
 		}
 
 		.currentDNA {
-			overflow: hidden;
-			text-overflow: ellipsis;
-			width: 200px;
+			width: 100%;
+			height: 100px;
+			box-sizing: border-box;
+			padding: 10px;
+			text-align: center;
+			vertical-align: middle;
+		}
+
+		.sparkline {
+			background-color: rgba(255,255,255,0.3);
 		}
 		
 	</style>
@@ -194,14 +207,24 @@
 			<button class="interactive">Toggle interactive</button><br>
 		</div>
 		<div class="sliderContainer">
-			<label for="stepDelay">Speed:</label>
-			<span class="speed">1.00</span>
-			<input type="range" min="1" max="100" value="1" class="stepDelay slider reverse"></input>
+			<label for="stepDelay" class="speed_reset">Step delay:</label>
+			<span class="speed">16</span>
+			<input type="range" min="0" max="100" value="16" class="stepDelay slider reverse"></input>
+		</div>
+		<div class="sliderContainer">
+			<label for="max_iter" class="iter_reset">Steps/gen:</label>
+			<span class="noiter">100</span>
+			<input type="range" min="1" max="1000" value="100" class="max_iter slider"></input>
 		</div>
 		<div class="sliderContainer">
 			<label for="mutation_rate">Mutation:</label>
 			<span class="mutrate">0.50</span>
 			<input type="range" min="0" max="100" value="50" class="mutation_rate slider"></input><br>
+		</div>
+		<div class="sliderContainer">
+			<label for="num_neurons">Networks: </label>
+			<span class="nonetworks">400</span>
+			<input type="range" min="1" max="1000" value="400" class="num_networks slider"></input><br>
 		</div>
 		<div class="sliderContainer">
 			<label for="num_neurons">Neurons: </label>
@@ -220,19 +243,20 @@
 				<button class="apply_neurons">Apply</button>
 			</div>
 		</div>
-		<svg class="sparkline" width="320" height="50" stroke-width="0.5"></svg>
 		<h2>Result gen <span class="generation">-</span></h2>
+		<svg class="sparkline" width="320" height="50" stroke-width="0.5"></svg> <br><br>
+		Survival rate: <span class="survivalRate">0</span>% (<span class="targetAreaRatio">0</span>%)<br>
 		ms per generation: <span class="duration">- </span>ms<br>
-		Size: <span class="size"></span><br>
-		Survival rate: <span class="survivalRate">0</span>%<br>
-		DNA example: <div class="currentDNA"></div><br>
+		Size: <span class="size"></span><br><br>
+		DNA example:<br>
+		<textarea class="currentDNA" placeholder="Paste start DNA here (optional)"></textarea><br>
 		<br>
 		Connected neurons total: <span class="connectedNeurons">-</span><br>
 		Connected neurons avg: <span class="connectedNeuronsAvg">-</span><br>
 		<br>
-		Avg. distance traveled: <span class="avgDistanceTraveled"></span><br>
+		Avg. distance traveled: <span class="avgDistanceTraveled">0</span><br>
 		<br>
-		Data length: <span class="avgDnaLength"></span><br>
+		Data length: <span class="avgDnaLength">0</span><br>
 	</div>
 	<!--div class="explanations">
 		<h1>Explanations</h1>

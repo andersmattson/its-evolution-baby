@@ -46,41 +46,19 @@ registerNeuronDefinition( function ( args ) {
 // }, NeuronTypes.GENERATOR, {}, 'Random', 'random()' );
 
 registerNeuronDefinition( function ( args ) {
-	return Math.tanh( args.weightedInput ) * Constants.MAXIMUM_MOVING_DISTANCE;
-}, NeuronTypes.ACTOR, { x: true }, 'HorizontalMover', 'tanh( weightedInput ) * MAX_DISTANCE' );
-
-/*
-registerNeuronDefinition( function ( args ) {
-	return Math.tanh( args.weightedInput ) * Constants.MAXIMUM_MOVING_DISTANCE;
-}, NeuronTypes.ACTOR, { y: true }, 'VerticalMover', 'tanh( weightedInput ) * MAX_DISTANCE' );
-
-registerNeuronDefinition( function ( args ) {
 	return Math.tanh( args.weightedInput ) * 2 * Math.PI;
 }, NeuronTypes.ACTOR, { direction: true }, 'Direction', 'tanh( weightedInput ) * 2π' );
-*/
 
 registerNeuronDefinition( function ( args ) {
 	return Math.tanh( args.weightedInput ) * Constants.MAXIMUM_MOVING_DISTANCE;
 }, NeuronTypes.ACTOR, { speed: true }, 'Speed', 'tanh( weightedInput ) * MAX_DISTANCE' );
-
-registerNeuronDefinition( function ( args ) {
-	return args.position.x;
-}, NeuronTypes.SENSORY, {}, 'PositionX', 'position.x' );
-
-registerNeuronDefinition( function( args ) {
-	return args.position.y;
-}, NeuronTypes.SENSORY, {}, 'PositionY', 'position.y' );
 
 registerNeuronDefinition( function( args ) {
 	return 1 / ( 1 + args.distanceToTarget );
 }, NeuronTypes.SENSORY, {}, 'InvertedTargetDistance', '1 / ( 1 + distanceToTarget )' );
 
 registerNeuronDefinition( function( args ) {
-	return args.targetDirectionX;
-}, NeuronTypes.SENSORY, {}, 'TargetDirectionX', 'targetDirectionX' );
-
-registerNeuronDefinition( function( args ) {
-	return args.targetDirectionY;
-}, NeuronTypes.SENSORY, {}, 'TargetDirectionY', 'targetDirectionY' );
+	return args.targetDirection;
+}, NeuronTypes.SENSORY, {}, 'TargetDirection', 'targetDirection' );
 
 export default {};

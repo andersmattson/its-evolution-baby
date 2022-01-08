@@ -15,6 +15,7 @@ class ConstantsClass {
 	NEURON_DATA_MIDDLE = -1; // Calculated
 
 	MAXIMUM_MOVING_DISTANCE = 0.001;
+	ANGLE_LIMIT = Math.PI * 4;
 
 	constructor () {
 
@@ -33,7 +34,8 @@ class ConstantsClass {
 	
 		this.NEURON_DATA_MIDDLE = Math.pow( 4, this.NEURON_DATA_LENGTH ) / 2;
 	
-		this.MAXIMUM_MOVING_DISTANCE = 0.05;
+		this.MAXIMUM_MOVING_DISTANCE = 0.03;
+		this.ANGLE_LIMIT = Math.PI * 4;
 
 		this.updateNeuronTypeCount( this.#NEURON_TYPES );
 	}

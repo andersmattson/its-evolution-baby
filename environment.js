@@ -15,7 +15,7 @@ class Environment extends EventListener {
 	#generation = 			0;
 	#iteration = 			0;
 	#iterationStartTime = 	0;
-	#stepDelay = 			0;
+	#stepDelay = 			16;
 	#maxIterations = 		100;
 	#numNetworks = 			100;
 	#mutationRate = 		0.01;
@@ -29,7 +29,11 @@ class Environment extends EventListener {
 	#targets = 				[];
 	#interactiveMode = 		false;
 	#firstDNA = 			null;
-	#currentDNA = 			null;
+	#currentDNA = 			'';
+
+	targetArea = 			0;
+	area = 					0;
+	started = 				false;
 
 	constructor( { 
 		canvas, 
@@ -61,6 +65,8 @@ class Environment extends EventListener {
 			this.renderScale.pixelScale = this.renderScale.x;
 		}
 
+		this.area = 4 * this.renderScale.xRatio * this.renderScale.yRatio;
+
 		this.#maxIterations = 		maxIterations || 100;
 		this.#numNetworks = 		numNetworks || 100;
 		this.#mutationRate = 		mutationRate || 0.01;
@@ -72,7 +78,7 @@ class Environment extends EventListener {
 		this.#render = 				render || true;
 		this.#survivorsOnly = 		survivorsOnly || false;
 		this.#evolution = 			0;
-		this.#stepDelay = 			0;
+		this.#stepDelay = 			16;
 
 		this.initRepresentation();
 		this.initRandomNetworks();
@@ -86,6 +92,9 @@ class Environment extends EventListener {
 
 	initRepresentation() {
 		this.#reps = [];
+		document.querySelectorAll( '.network' ).forEach( ( rep ) => {
+			rep.parentElement.removeChild( rep );
+		} );
 		for( let i = 0; i < this.#numNetworks; i++ ) {
 			let elem = document.createElement( 'div' );
 			elem.classList.add( 'network' );
@@ -113,7 +122,9 @@ class Environment extends EventListener {
 	clearNetworks () {
 		let i = 0;
 		while( this.#networks.length ) {
-			this.getRep( i ).style.display = 'none';
+			if( i < this.#reps.length ) {
+				this.getRep( i ).style.display = 'none';
+			}
 			this.#networks.shift();
 			i++;
 		}
@@ -128,6 +139,7 @@ class Environment extends EventListener {
 			rep.style.left = position.x + 'px';
 			rep.style.top = position.y + 'px';
 			rep.style.display = 'block';
+			rep.style.transform = `rotate(${this.#networks[ i ].direction * 180 / Math.PI}deg)`;
 
 		};
 
@@ -144,6 +156,7 @@ class Environment extends EventListener {
 
 		let dna = Network.randomDNA( this.#numNeurons, this.#numConnections );
 		this.#firstDNA = dna;
+		this.#currentDNA = dna;
 
 		for ( let i = 0; i < this.#numNetworks; i++ ) {
 			if( this.#randomInitSpawn ) {
@@ -155,7 +168,8 @@ class Environment extends EventListener {
 
 	initNetworksFromDnaSequence ( dna ) {
 
-		this.reset();
+		this.reset( false );
+		this.initRepresentation();
 		this.#firstDNA = dnaSequenceToNumbers( dna );
 
 		for ( let i = 0; i < this.#numNetworks; i++ ) {
@@ -225,16 +239,22 @@ class Environment extends EventListener {
 		} else {
 			this.regenerateNetworks();
 		}
+
+		this.started = true;
 		
 		this.#iterationStartTime = Date.now();
+		let fn = this._step.bind( this );
+		for (let i = 0; i < this.#maxIterations; i++) {
+			setTimeout( fn, this.#stepDelay * i );
+		}
 
-		this.#interval = setInterval( () => {
-			this.step();
-			if ( this.#iteration >= this.#maxIterations && !this.#interactiveMode ) {
-				this.stop();
-			}
-		}, this.#stepDelay );
+	}
 
+	_step() {
+		this.step();
+		if ( this.#iteration >= this.#maxIterations && !this.#interactiveMode ) {
+			this.stop();
+		}
 	}
 
 	stop() {
@@ -257,6 +277,8 @@ class Environment extends EventListener {
 		this.#canvas.parentNode.appendChild( target.getElement() );
 		target.getElement().style.width = ( target.radius * 2 * this.renderScale.x / this.renderScale.xRatio ) + 'px';
 		target.getElement().style.height = ( target.radius * 2 * this.renderScale.y / this.renderScale.yRatio ) + 'px';
+
+		this.targetArea += target.area;
 	}
 
 	togglePause( pause ) {
@@ -291,15 +313,6 @@ class Environment extends EventListener {
 
 	updateStepDelay ( stepDelay ) {
 		this.#stepDelay = stepDelay || 0;
-		
-		clearInterval( this.#interval );
-
-		this.#interval = setInterval( () => {
-			this.step();
-			if ( this.#iteration >= this.#maxIterations && !this.#interactiveMode ) {
-				this.stop();
-			}
-		}, this.#stepDelay);
 	}
 
 	pixelPosition( position ) {
@@ -309,7 +322,7 @@ class Environment extends EventListener {
 		}
 	}
 
-	reset() {
+	reset( init = true ) {
 		let state = this.#waitForStart;
 		this.togglePause( true );
 		this.clearNetworks();
@@ -319,8 +332,11 @@ class Environment extends EventListener {
 		this.#generation = 0;
 		this.#evolution = 0;
 		this.#generationLastSize = 0;
-		this.initRandomNetworks();
+		if( init ) {
+			this.initRandomNetworks();
+		}
 		this.togglePause( state );
+		this.dispatchEvent( 'reset' );
 	}
 
 	get size() {
@@ -346,7 +362,7 @@ class Environment extends EventListener {
 
 		return {
 			generation: this.#generation,
-			survivalRate: ( 100 * this.#networks.length / this.#generationLastSize ).toFixed( 2 ) * 1,
+			survivalRate: this.started ? ( 100 * this.#networks.length / this.#generationLastSize ).toFixed( 2 ) * 1 : 0,
 			size: this.#networks.length,
 			connectedNeurons: connectedNeurons,
 			connectedNeuronsAvg: ( connectedNeurons / this.#networks.length ).toFixed( 2 ) * 1,
@@ -355,8 +371,9 @@ class Environment extends EventListener {
 			avgDistanceTraveled: ( totalDistanceTraveled / this.#networks.length ).toFixed( 2 ) * 1,
 			avgDnaLength: ( totalDnaLength / this.#networks.length ).toFixed( 2 ) * 1,
 			totalDnaLength: totalDnaLength,
-			duration: ( Date.now() - this.#iterationStartTime ),
-			currentDNA: numberToDnaSequence( this.#currentDNA )
+			duration: this.started ? ( Date.now() - this.#iterationStartTime ) : 0,
+			currentDNA: numberToDnaSequence( this.#currentDNA ),
+			targetAreaRatio: (this.targetAreaRatio * 100).toFixed( 2 ) * 1,
 		}
 	}
 
@@ -370,6 +387,16 @@ class Environment extends EventListener {
 
 	set mutationRate( mutationRate ) {
 		this.#mutationRate = Math.min( 1, Math.max( 0, mutationRate ) );
+	}
+
+	get numNetworks() {
+		return this.#numNetworks;
+	}
+
+	set numNetworks( numNetworks ) {
+		this.#numNetworks = parseInt( numNetworks );
+		this.initRepresentation();
+		this.reset();
 	}
 
 	get numNeurons() {
@@ -388,6 +415,32 @@ class Environment extends EventListener {
 	set numConnections( numConnections ) {
 		this.#numConnections = parseInt( numConnections );
 		this.reset();
+	}
+
+	get targetsArea() {
+		return this.#targets.reduce( ( area, target ) => {
+			return area + target.area;
+		}, 0 );
+	}
+
+	get targetAreaRatio() {
+		return this.targetArea / this.area;
+	}
+
+	get maxIterations() {
+		return this.#maxIterations;
+	}
+
+	set maxIterations( maxIterations ) {
+		this.#maxIterations = parseInt( maxIterations );
+	}
+
+	get generation() {
+		return this.#generation;
+	}
+
+	get iteration() {
+		return this.#iteration;
 	}
 
 }
