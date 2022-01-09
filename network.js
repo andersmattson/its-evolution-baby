@@ -3,6 +3,15 @@ import {} from './outputfunctions.js';
 import { NeuronDefinitions } from './neuron.js';
 import Constants from './constants.js';
 
+const PI2 = 2 * Math.PI;
+const DEG10 = Math.PI / 18;
+const DEG15 = Math.PI / 12;
+const DEG30 = Math.PI / 6;
+const DEG45 = Math.PI / 4;
+const DEG315 = Math.PI * 7 / 4;
+const DEG330 = PI2 - DEG30;
+const DEG350 = PI2 - DEG10;
+
 function randomInt( min = 0, max = 1 ) {
 	return Math.floor( Math.random() * ( max - min + 1 ) ) + min;
 }
@@ -45,7 +54,7 @@ export function createNetwork( dna, renderScale ) {
 		connectedNeurons: [],
 		iteration: 0,
 		position: { x: 2 * ( Math.random() - 0.5 ) * renderScale.xRatio, y: 2 * ( Math.random() - 0.5 ) * renderScale.yRatio },
-		direction: Math.random() * 2 * Math.PI,
+		direction: Math.random() * PI2,
 		speed: 0,
 		initialPosition: { x: 0, y: 0 },
 		renderScale: { x: 1, y: 1, xRatio: 1, yRatio: 1 },
@@ -140,16 +149,41 @@ export function stepNetwork( network, targets ) {
 	}
 
 	targetDirection = Math.atan2( closestTargetDirectionCoords.y, closestTargetDirectionCoords.x );
+	targetDirection += targetDirection < 0 ? PI2 : 0;
+
+	let diff = Math.abs( targetDirection - network.direction );
+	// let diffRightEye = Math.abs( targetDirection - network.direction - DEG15 );
+	// let diffLeftEye = Math.abs( targetDirection - network.direction + DEG15 );
+	// let targetVisibleRight = 0;
+	// let targetVisibleLeft = 0;
+
+	// if ( diffRightEye < DEG30 || diffRightEye > DEG315 ) {
+	// 	targetVisibleRight = 1;
+	// }
+	// if ( diffLeftEye < DEG30 || diffLeftEye > DEG315 ) {
+	// 	targetVisibleLeft = 1;
+	// }
+
+	let targetVisible = 0;
+
+	if( diff < DEG30 || diff > DEG330 ) {
+		targetVisible = 1;
+	} else {
+		smallestDistance = Infinity;
+	}
 
 	for ( let i = 0, l = network.connectedNeurons.length; i < l; i++ ) {
 
 		stepNeuron( network.connectedNeurons[i], { 
 			iteration: network.iteration,
-			position: network.position,
-			direction: network.direction,
-			speed: network.speed,
+			// position: network.position,
+			// direction: network.direction,
+			// speed: network.speed,
+			// targetDirection: targetDirection,
 			distanceToTarget: smallestDistance,
-			targetDirection: targetDirection,
+			// targetVisibleLeft: targetVisibleLeft,
+			// targetVisibleRight: targetVisibleRight,
+			targetVisible: targetVisible,
 		} );
 
 		if( network.connectedNeurons[i].affects.direction ) {
@@ -160,7 +194,8 @@ export function stepNetwork( network, targets ) {
 		}
 	}
 
-	network.direction += Math.max( -Constants.ANGLE_LIMIT, Math.min( Constants.ANGLE_LIMIT, direction ) );
+	network.direction = (network.direction + Math.max( -Constants.ANGLE_LIMIT, Math.min( Constants.ANGLE_LIMIT, direction ) ) ) % ( PI2 );
+	network.direction += network.direction < 0 ? PI2 : 0;
 	network.speed = Math.max( 0, Math.min( Constants.MAXIMUM_MOVING_DISTANCE, network.speed + speed ) );
 	network.position.x += network.speed * Math.cos( network.direction );
 	network.position.y += network.speed * Math.sin( network.direction );

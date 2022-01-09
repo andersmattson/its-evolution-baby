@@ -7,7 +7,8 @@ import {
 	NeuronDefinitionMap, 
 	NeuronDefinitions, 
 	DisabledNeuronDefinitions, 
-	NeuronTypeNames 
+	NeuronTypeNames,
+	NeuronTypes,
 } from './neuron.js';
 
 function $(selector) {
@@ -22,6 +23,8 @@ function updateNeuronDefinitions() {
 	$('.active_neuron_types').innerText = NeuronDefinitions.length;
 	$('.disabled_neuron_types').innerText = DisabledNeuronDefinitions.length + NeuronDefinitions.length;
 }
+
+updateNeuronDefinitions();
 
 function updateStats( stats){
 
@@ -47,33 +50,72 @@ function updateStats( stats){
 
 	plotData.shift();
 	plotData.push( stats.survivalRate );
-
+	
 	sparkline.sparkline( $(".sparkline"), plotData, plotOptions );
+
+	NeuronDefinitions.forEach( ( neuron, i ) => {
+		if( stats.neuronsInUse.has( neuron.neuronName ) ) {
+			$(`.inuse_${neuron.neuronName}`).classList.add('active');
+		} else {
+			$(`.inuse_${neuron.neuronName}`).classList.remove('active');
+		}
+	} );
 }
 
-let list = $('.neuron_list');
-Object.keys( NeuronDefinitionMap ).forEach( def => {
-	let neuron = NeuronDefinitionMap[def];
+function renderNeuronType( neuron ) {
+	let list = $('.neuron_list');
+	let def = neuron.neuronName;
 	let elem = document.createElement( 'div' );
-	elem.classList.add( 'neuronDefinition' );
+	elem.classList.add( 'nDef' );
 	elem.innerHTML = 
 	`<input type="checkbox" value="${def}" class="${def}" checked />
-	<div>	
-		<div class="neuronDefinitionName">${def}</div>
-		<div class="neuronDefinitionType">Type: ${NeuronTypeNames[neuron.type]}, affects: ${Object.keys(neuron.affects).join() || 'none'}</div>
-		<div class="neuronDefinitionDescription">f=${NeuronDefinitionMap[def].description}</div>
+	<div>
+		<div>${def} <span class="inuse inuse_${def}">In use</span></div>
+		<div class="nDefType">Type: ${NeuronTypeNames[neuron.type]}, affects: ${Object.keys(neuron.affects).join() || 'none'}</div>
+		<div class="nDefDesc">f=${NeuronDefinitionMap[def].description}</div>
 	</div>`;
 	list.appendChild( elem );
-});
+}
+
+function renderNeuronCategory( type, title ) {
+	let list = $('.neuron_list');
+	let genTitle = document.createElement('h3');
+	genTitle.innerText = title;
+	list.appendChild( genTitle );
+	Object.values( NeuronDefinitionMap ).filter( ( def ) => def.type === type ).forEach( renderNeuronType );
+}
+
+[ 
+	{
+		title: 'Sensors',
+		type: NeuronTypes.SENSORY,
+	},
+	{
+		title: 'Generators',
+		type: NeuronTypes.GENERATOR,
+	},
+	{
+		title: 'Synapses',
+		type: NeuronTypes.SYNAPSE,
+	},
+	{
+		title: 'Actors',
+		type: NeuronTypes.ACTOR,
+	},
+].forEach( ( item ) => {
+	renderNeuronCategory( item.type, item.title );
+} );
 
 $('.apply_neurons').addEventListener( 'click', ( e ) => {
 	if( confirm( 'This will reset the current simulation!' ) ){
-		$all( '.neuronDefinition' ).forEach( elem => {
+		$all( '.nDef' ).forEach( elem => {
 			let input = elem.querySelector( 'input' );
 			if( input.checked ) {
 				enableNeuronDefinition( input.value );
+				elem.classList.remove( 'disabled' );
 			} else {
 				disableNeuronDefinition( input.value );
+				elem.classList.add( 'disabled' );
 			}
 		});
 		updateNeuronDefinitions();
@@ -89,6 +131,10 @@ $('.display_neurons').addEventListener( 'click', () => {
 	$('.neuron_list').classList.toggle( 'hidden' );
 });
 
+$('.show_info').addEventListener( 'click', () => {
+	$('.neuron_list').classList.toggle( 'info_visible' );
+});
+
 let plotData = new Array(100).fill(0);
 
 let plotOptions = {
@@ -101,8 +147,8 @@ sparkline.sparkline( $(".sparkline"), plotData, plotOptions );
 const environment = new Environment({ 
 	canvas: $('.environment'),
 	numNetworks: 400,
-	numNeurons: 128,
-	numConnections: 128,
+	numNeurons: 32,
+	numConnections: 64,
 	mutationRate: 0.5,
 	waitForStart: true,
 	randomInitSpawn: true,
@@ -138,7 +184,7 @@ $(".speed_reset").addEventListener( 'click', ( e ) => {
 
 $(".mutation_rate").addEventListener( 'input', ( e ) => {
 	environment.mutationRate = parseInt( e.target.value ) / 100;
-	$('.mutrate').innerHTML = environment.mutationRate.toFixed(2);
+	$('.mutrate').innerHTML = parseInt( e.target.value );
 } );
 
 $(".num_networks").addEventListener( 'change', ( e ) => {

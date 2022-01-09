@@ -1,6 +1,8 @@
 import * as Network from './network.js';
 import { EventListener } from './eventlistener.js';
 import { numberToDnaSequence, dnaSequenceToNumbers } from './helpers.js';
+import { NeuronDefinitions } from './neuron.js';
+const DEG180BYPI = 180 / Math.PI;
 
 class Environment extends EventListener {
 
@@ -139,7 +141,7 @@ class Environment extends EventListener {
 			rep.style.left = position.x + 'px';
 			rep.style.top = position.y + 'px';
 			rep.style.display = 'block';
-			rep.style.transform = `rotate(${this.#networks[ i ].direction * 180 / Math.PI}deg)`;
+			rep.style.transform = `rotate(${this.#networks[ i ].direction * DEG180BYPI}deg)`;
 
 		};
 
@@ -349,6 +351,7 @@ class Environment extends EventListener {
 		let hasMoved2D = 0;
 		let totalDistanceTraveled = 0;
 		let totalDnaLength = 0;
+		let neuronsInUse = new Set();
 		this.#networks.forEach( network => {
 
 			if( network.position.x !== network.initialPosition.x && network.position.y !== network.initialPosition.y ) {
@@ -357,6 +360,9 @@ class Environment extends EventListener {
 			connectedNeurons += network.connectedNeurons.length;
 			totalDistanceTraveled += network.totalDistanceTraveled;
 			totalDnaLength += network.dna.length;
+			network.connectedNeurons.forEach( neuron => {
+				neuronsInUse.add( NeuronDefinitions[neuron.type].neuronName );
+			});
 
 		} );
 
@@ -374,6 +380,7 @@ class Environment extends EventListener {
 			duration: this.started ? ( Date.now() - this.#iterationStartTime ) : 0,
 			currentDNA: numberToDnaSequence( this.#currentDNA ),
 			targetAreaRatio: (this.targetAreaRatio * 100).toFixed( 2 ) * 1,
+			neuronsInUse: neuronsInUse,
 		}
 	}
 

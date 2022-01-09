@@ -73,6 +73,7 @@ function stepNeuron ( neuron, args ) {
 		weightedInput,									// The weighted input to the neuron
 		weightedAverage,								// The weighted average of the inputs
 		value: neuron.value,							// The current value of the neuron
+		targetVisible: args.targetVisible,				// Is the target visible
 		lastWeightedInput: neuron.lastWeightedInput,	// The last weighted input to the neuron
 		lastWeightedAverage: neuron.lastWeightedAverage,// The last weighted average of the inputs
 	} );
