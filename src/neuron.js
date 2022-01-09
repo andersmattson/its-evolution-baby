@@ -1,4 +1,4 @@
-import Constants from './src/constants.js';
+import Constants from './constants.js';
 
 const NeuronTypes = {
 	SENSORY: 1, 	// Environment inputs only, outputs

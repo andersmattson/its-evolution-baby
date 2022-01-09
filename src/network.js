@@ -1,7 +1,7 @@
 import { createNeuron, stepNeuron, connectNeuronInput } from './neuron.js';
 import {} from './outputfunctions.js';
 import { NeuronDefinitions } from './neuron.js';
-import Constants from './src/constants.js';
+import Constants from './constants.js';
 
 const PI2 = 2 * Math.PI;
 const DEG10 = Math.PI / 18;

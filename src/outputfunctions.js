@@ -1,5 +1,5 @@
 import { NeuronTypes, registerNeuronDefinition } from './neuron.js';
-import Constants from './src/constants.js';
+import Constants from './constants.js';
 
 const PI2 = Math.PI * 2;
 
