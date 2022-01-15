@@ -1,6 +1,6 @@
 import { createNeuron, stepNeuron, connectNeuronInput } from './neuron.js';
 import {} from './outputfunctions.js';
-import { NeuronDefinitions } from './neuron.js';
+import { NeuronDefinitions, NeuronTypes } from './neuron.js';
 import Constants from './constants.js';
 
 const PI2 = 2 * Math.PI;
@@ -57,10 +57,8 @@ export function createNetwork( dna, renderScale ) {
 		direction: Math.random() * PI2,
 		speed: 0,
 		initialPosition: { x: 0, y: 0 },
-		renderScale: { x: 1, y: 1, xRatio: 1, yRatio: 1 },
 		dna: dna,
-		totalDistanceTraveled: 0,
-		renderScale: renderScale,
+		totalDistanceTraveled: 0
 	}
 
 	network.initialPosition = { ...network.position };
@@ -115,9 +113,25 @@ function setupFromDNA ( network, dna ) {
 			connectNeurons( network, network.neurons[ input ], network.neurons[ output ], weight );
 		}
 	}
+
+	return network; //cleanupNetwork( network );
 }
 
-export function clone ( network, mutate = 0.01 ) {
+function cleanupNetwork ( network ) {
+	// let connectedNeurons = [ ...network.connectedNeurons ];
+	for( let i = 0; i < network.connectedNeurons.length; i++ ){
+		if( (NeuronTypes.OUTPUTS & network.connectedNeurons[ i ].neuronType) !== 0 && !network.connectedNeurons[ i ].hasOutputs ) {
+			network.connectedNeurons.splice( i, 1 );
+			i--;
+		} else if( (NeuronTypes.INPUTS & network.connectedNeurons[ i ].neuronType) !== 0 && !network.connectedNeurons[ i ].hasInputs ) {
+			network.connectedNeurons.splice( i, 1 );
+			i--;
+		}
+	}
+	return network;
+}
+
+export function clone ( network, mutate = 0.01, renderScale ) {
 	let chance = Math.random();
 	let dna = network.dna;
 
@@ -126,10 +140,10 @@ export function clone ( network, mutate = 0.01 ) {
 		dna = network.dna.substring( 0, index - 1 ) + randomInt( 0, Constants.DNA_BASE - 1 ) + network.dna.substring( index );
 	}
 
-	return createNetwork( dna, network.renderScale );
+	return createNetwork( dna, renderScale );
 }
 
-export function stepNetwork( network, targets ) {
+export function stepNetwork( network, targets, renderScale ) {
 	network.iteration++;
 	let smallestDistance = Infinity;
 	let closestTargetDirectionCoords = { x: 0, y: 0 };
@@ -200,8 +214,8 @@ export function stepNetwork( network, targets ) {
 	network.position.x += network.speed * Math.cos( network.direction );
 	network.position.y += network.speed * Math.sin( network.direction );
 
-	network.position.x = Math.min( Math.max( network.position.x, -network.renderScale.xRatio ), network.renderScale.xRatio );
-	network.position.y = Math.min( Math.max( network.position.y, -network.renderScale.yRatio ), network.renderScale.yRatio );
+	network.position.x = Math.min( Math.max( network.position.x, -renderScale.xRatio ), renderScale.xRatio );
+	network.position.y = Math.min( Math.max( network.position.y, -renderScale.yRatio ), renderScale.yRatio );
 
 	network.totalDistanceTraveled += network.speed;
 }

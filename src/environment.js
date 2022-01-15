@@ -2,6 +2,8 @@ import * as Network from './network.js';
 import { EventListener } from './eventlistener.js';
 import { numberToDnaSequence, dnaSequenceToNumbers } from './helpers.js';
 import { NeuronDefinitions } from './neuron.js';
+import { generateMapFromDna } from './networkmap.js';
+
 const DEG180BYPI = 180 / Math.PI;
 
 class Environment extends EventListener {
@@ -101,6 +103,7 @@ class Environment extends EventListener {
 			let elem = document.createElement( 'div' );
 			elem.classList.add( 'network' );
 			elem.classList.add( `rep${i}` );
+			elem.setAttribute( 'data-idx', `${i}` );
 			this.#canvas.appendChild( elem );
 			this.#reps.push( elem );
 		}
@@ -208,7 +211,7 @@ class Environment extends EventListener {
 		} );
 
 		while ( networks.length < this.#numNetworks ) {
-			networks.push( Network.clone( this.#networks[ networkIndex[ Math.floor( Math.random() * networkIndex.length ) ] ], this.#mutationRate ) );
+			networks.push( Network.clone( this.#networks[ networkIndex[ Math.floor( Math.random() * networkIndex.length ) ] ], this.#mutationRate, this.renderScale ) );
 		}
 		
 		this.clearNetworks();
@@ -227,7 +230,7 @@ class Environment extends EventListener {
 		} );
 		
 		for ( let i = 0, l = this.#networks.length; i < l; i++ ) {
-			Network.stepNetwork( this.#networks[ i ], this.#targets );
+			Network.stepNetwork( this.#networks[ i ], this.#targets, this.renderScale );
 		};
 
 		this.#iteration++;
@@ -341,6 +344,10 @@ class Environment extends EventListener {
 		this.dispatchEvent( 'reset' );
 	}
 
+	getNetwork( idx ) {
+		return this.#networks[ idx ];
+	}
+
 	get size() {
 		return this.#networks.length;
 	}
@@ -379,6 +386,7 @@ class Environment extends EventListener {
 			totalDnaLength: totalDnaLength,
 			duration: this.started ? ( Date.now() - this.#iterationStartTime ) : 0,
 			currentDNA: numberToDnaSequence( this.#currentDNA ),
+			currentDNANumbers: this.#currentDNA,
 			targetAreaRatio: (this.targetAreaRatio * 100).toFixed( 2 ) * 1,
 			neuronsInUse: neuronsInUse,
 		}
@@ -448,6 +456,10 @@ class Environment extends EventListener {
 
 	get iteration() {
 		return this.#iteration;
+	}
+
+	get isPaused() {
+		return this.#waitForStart;
 	}
 
 }

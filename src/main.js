@@ -1,6 +1,8 @@
 import * as sparkline from './sparkline.js';
 import { Environment } from './environment.js';
 import Target from './target.js';
+import { generateMapFromDna, resetMap } from './networkmap.js';
+
 import { 
 	enableNeuronDefinition,
 	disableNeuronDefinition,
@@ -47,6 +49,8 @@ function updateStats( stats){
 	if( $('.currentDNA') !== document.activeElement ) {
 		$('.currentDNA').innerHTML = stats.currentDNA;
 	}
+
+	generateMapFromDna( stats.currentDNANumbers );
 
 	plotData.shift();
 	plotData.push( stats.survivalRate );
@@ -250,5 +254,23 @@ $(".currentDNA").addEventListener( 'input', ( e ) => {
 			$(".connectedNeurons").innerHTML = environment.stats.connectedNeurons;
 			$(".connectedNeuronsAvg").innerHTML = environment.stats.connectedNeuronsAvg;
 		}, 1000 );
+	}
+});
+
+$('.networkmap .close').addEventListener( 'click', () => {
+	if( $('.networkmap').classList.contains( 'hidden' ) ) {
+		$('.networkmap').classList.remove( 'hidden' );
+	} else {
+		$('.networkmap').classList.add( 'hidden' );
+		resetMap();
+	}
+});
+
+$('.environmentContainer').addEventListener( 'click', (e) => {
+	if ( environment.isPaused && e.target.classList.contains( 'network' ) ) {
+		let idx = e.target.dataset.idx;
+		let network = environment.getNetwork(idx);
+		generateMapFromDna( network.dna );
+		$('.networkmap').classList.remove( 'hidden' )
 	}
 });

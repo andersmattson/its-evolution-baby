@@ -19,7 +19,7 @@ const NeuronDefinitions = [];
 const DisabledNeuronDefinitions = [];
 const NeuronDefinitionMap = {};
 
-function registerNeuronDefinition( fn, type = NeuronTypes.SYNAPSE, affects = {}, name = '', description = '' ) {
+function registerNeuronDefinition( fn, type = NeuronTypes.SYNAPSE, affects = {}, name = '', description = '', shortName = '' ) {
 
 	if( NeuronDefinitionMap[ name ] ) {
 		throw new Error( `Neuron definition with name '${ name }' already exists.` );
@@ -28,6 +28,7 @@ function registerNeuronDefinition( fn, type = NeuronTypes.SYNAPSE, affects = {},
 	fn.type = type;
 	fn.affects = affects;
 	fn.neuronName = name;
+	fn.shortName = shortName;
 	fn.description = description;
 	NeuronDefinitions.push( fn );
 	NeuronDefinitionMap[ name ] = fn;
@@ -86,20 +87,26 @@ function connectNeuronInput ( neuron, input, weight = 1 ) {
 	if( input === neuron ) {
 		if( (NeuronTypes.INPUTS & neuron.neuronType) !== 0 && (NeuronTypes.OUTPUTS & neuron.neuronType) !== 0 ) {
 			neuron.selfWeight = weight;
+			neuron.hasOutputs = true;
+			neuron.hasInputs = true;
 			return true;
 		}
 		return false;
 	} else if ( (NeuronTypes.OUTPUTS & input.neuronType) !== 0 && (NeuronTypes.INPUTS & neuron.neuronType) !== 0 ) {
 		neuron.inputs.push( { input, weight } );
+		input.hasOutputs = true;
+		neuron.hasInputs = true;
 		return true;
 	}
 	return false;
 }
 
+let TotalNeuronsCreated = 0;
 function createNeuron( { type, initialValue } ) {
 	let _type = type || 0;
 	let _initialValue = initialValue || 0;
 	return {
+		id: TotalNeuronsCreated++,
 		isNeuron: true,
 		type: _type,
 		initialValue: _initialValue,
@@ -111,6 +118,8 @@ function createNeuron( { type, initialValue } ) {
 		affects: NeuronDefinitions[ _type ].affects,
 		lastWeightedInput: 0,
 		lastWeightedAverage: 0,
+		hasOutputs: false,
+		hasInputs: false,
 	};
 }
 
