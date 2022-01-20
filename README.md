@@ -9,3 +9,6 @@ npm install
 ```
 npm run dev
 ```
+
+## Live version
+Can be found [here](https://andersmattson.github.io/its-evolution-baby/)
