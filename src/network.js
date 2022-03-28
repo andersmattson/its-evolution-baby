@@ -67,6 +67,12 @@ export function createNetwork( dna, renderScale ) {
 	return network;
 }
 
+export function setRandomInitialPosition( network, renderScale ) {
+	let position = { x: 2 * ( Math.random() - 0.5 ) * renderScale.xRatio, y: 2 * ( Math.random() - 0.5 ) * renderScale.yRatio }
+	network.position = { ...position };
+	network.initialPosition = { ...position };
+}
+
 export function connectNeurons ( network, input, output, weight = 1 ) {
 	if ( input.isNeuron && output.isNeuron ) {
 		const result = connectNeuronInput( output, input, weight );
@@ -157,7 +163,7 @@ export function clone ( network, mutate = 0.01, renderScale ) {
 	return createNetwork( dna, renderScale );
 }
 
-export function stepNetwork( network, targets, renderScale ) {
+export function stepNetwork( network, targets, obstacleMap, renderScale, obstacleResolution ) {
 
 	let smallestDistance = Infinity;
 	let closestTargetDirectionCoords = { x: 0, y: 0 };
@@ -218,11 +224,25 @@ export function stepNetwork( network, targets, renderScale ) {
 	network.direction = (network.direction + Math.max( -Constants.ANGLE_LIMIT, Math.min( Constants.ANGLE_LIMIT, direction ) ) ) % ( PI2 );
 	network.direction += network.direction < 0 ? PI2 : 0;
 	network.speed = Math.max( 0, Math.min( Constants.MAXIMUM_MOVING_DISTANCE, network.speed + speed ) );
-	network.position.x += network.speed * Math.cos( network.direction );
-	network.position.y += network.speed * Math.sin( network.direction );
 
-	network.position.x = Math.min( Math.max( network.position.x, -renderScale.xRatio ), renderScale.xRatio );
-	network.position.y = Math.min( Math.max( network.position.y, -renderScale.yRatio ), renderScale.yRatio );
+	let x = network.position.x + Math.cos( network.direction ) * network.speed;
+	let y = network.position.y + Math.sin( network.direction ) * network.speed;
+	x = Math.min( Math.max( x, -renderScale.xRatio ), renderScale.xRatio );
+	y = Math.min( Math.max( y, -renderScale.yRatio ), renderScale.yRatio );
 
-	network.totalDistanceTraveled += network.speed;
+	// Check obstacle collision
+	let obstacleId = Math.round( x * obstacleResolution / 2 ) + '_' + Math.round( y * obstacleResolution / 2 );
+	if( !obstacleMap[ obstacleId ] ) {
+		network.position.x = x;
+		network.position.y = y;
+		network.totalDistanceTraveled += network.speed;
+	}
+
+	// network.position.x += network.speed * Math.cos( network.direction );
+	// network.position.y += network.speed * Math.sin( network.direction );
+
+	// network.position.x = Math.min( Math.max( network.position.x, -renderScale.xRatio ), renderScale.xRatio );
+	// network.position.y = Math.min( Math.max( network.position.y, -renderScale.yRatio ), renderScale.yRatio );
+
+	// network.totalDistanceTraveled += network.speed;
 }

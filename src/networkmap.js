@@ -30,11 +30,6 @@ export function displayNetworkMap( network ) {
 	generateMapFromNetwork( network );
 }
 
-// export function generateNetworkMap(dna) {
-// 	let network = createNetwork(dna, { xRatio: 1, yRatio: 1 });
-// 	return generateMapFromNetwork(network);
-// }
-
 export function generateMapFromNetwork ( network ) {
 	let data = getMapData(network);
 	resetMap();

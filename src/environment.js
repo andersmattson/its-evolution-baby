@@ -33,6 +33,11 @@ class Environment extends EventListener {
 	#firstDNA = 			null;
 	#currentDNA = 			'';
 
+	#obstacles = 			[];
+	#obstacleMap = 			{};
+	obstacleResolution	=	9;
+	obstacleGridSize;
+
 	targetArea = 			0;
 	area = 					0;
 	started = 				false;
@@ -81,6 +86,7 @@ class Environment extends EventListener {
 		this.#survivorsOnly = 		survivorsOnly || false;
 		this.#evolution = 			0;
 		this.#stepDelay = 			16;
+		this.obstacleGridSize = 	2 / this.obstacleResolution;
 
 		this.initRepresentation();
 		this.initRandomNetworks();
@@ -113,6 +119,11 @@ class Environment extends EventListener {
 
 	addNetwork ( network ) {
 		this.#networks.push( network );
+
+		while( this.obstacleAtPosition( network.position ) ) {
+			Network.setRandomInitialPosition( network, this.renderScale );
+		}
+
 		if( this.#render ) {
 			let rep = this.getRep( this.#networks.length - 1 );
 			let position = this.pixelPosition( network.position );
@@ -209,7 +220,11 @@ class Environment extends EventListener {
 		} );
 
 		while ( networks.length < this.#numNetworks ) {
-			networks.push( Network.clone( this.#networks[ networkIndex[ Math.floor( Math.random() * networkIndex.length ) ] ], this.#mutationRate, this.renderScale ) );
+			let network = Network.clone( this.#networks[ networkIndex[ Math.floor( Math.random() * networkIndex.length ) ] ], this.#mutationRate, this.renderScale );
+			while( this.obstacleAtPosition( network.position ) ) {
+				Network.setRandomInitialPosition( network, this.renderScale );
+			}
+			networks.push( network );
 		}
 		
 		this.clearNetworks();
@@ -224,11 +239,13 @@ class Environment extends EventListener {
 				iteration: this.#iteration,
 				render: this.#render,
 				renderScale: this.renderScale,
+				obstacleMap: this.#obstacleMap,
+				obstacleGridSize: this.obstacleGridSize
 			} );
 		} );
 		
 		for ( let i = 0, l = this.#networks.length; i < l; i++ ) {
-			Network.stepNetwork( this.#networks[ i ], this.#targets, this.renderScale );
+			Network.stepNetwork( this.#networks[ i ], this.#targets, this.#obstacleMap, this.renderScale, this.obstacleResolution );
 		};
 
 		this.#iteration++;
@@ -282,6 +299,17 @@ class Environment extends EventListener {
 		// target.getElement().style.height = ( target.radius * 2 * this.renderScale.y / this.renderScale.yRatio ) + 'px';
 
 		this.targetArea += target.area;
+	}
+
+	addObstacle ( obstacle ) {
+		this.#obstacles.push( obstacle );
+		this.#canvas.parentNode.appendChild( obstacle.getElement() );
+		this.#obstacleMap[ obstacle.id ] = 1;
+	}
+
+	obstacleAtPosition( position ) {
+		let obstacleId = Math.round( position.x * this.obstacleResolution / 2 ) + '_' + Math.round( position.y * this.obstacleResolution / 2 );
+		return this.#obstacleMap[ obstacleId ] || 0;
 	}
 
 	togglePause( pause ) {

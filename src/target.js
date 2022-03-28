@@ -21,7 +21,7 @@ class Target {
 		this.area = Math.PI * this.radius * this.radius;
 
 		this.render();
-		
+
 		this.elem.addEventListener( 'mousedown', this.onMouseDown.bind( this ) );
 		this.elem.addEventListener( 'mouseup', this.onMouseUp.bind( this ) );
 		this.elem.addEventListener( 'mousemove', this.onMouseMove.bind( this ) );
@@ -92,9 +92,29 @@ class Target {
 		this.y = Math.min( this.#environment.renderScale.yRatio - this.radius, Math.max( -this.#environment.renderScale.yRatio + this.radius, y ) );
 	}
 
-	step( { iteration, render } ) {
+	step( { iteration, render, obstacleMap, obstacleGridSize } ) {
 		if( iteration === 0 ){
-			this.setPosition( ( 2 * Math.random() - 1 ) * this.#environment.renderScale.xRatio, ( 2 * Math.random() - 1 ) * this.#environment.renderScale.yRatio );
+			let x, y;
+			let redo = true;
+
+			while ( redo ) {
+				redo = false;
+				x = ( 2 * Math.random() - 1 ) * this.#environment.renderScale.xRatio;
+				y = ( 2 * Math.random() - 1 ) * this.#environment.renderScale.yRatio;
+
+				for( let _x = x - this.radius - obstacleGridSize; _x < x + this.radius + obstacleGridSize; _x += obstacleGridSize ){
+					for( let _y = y - this.radius - obstacleGridSize; _y < y + this.radius + obstacleGridSize; _y += obstacleGridSize ){
+						let obstacleId = Math.round( _x / obstacleGridSize ) + '_' + Math.round( _y / obstacleGridSize );
+						if( obstacleMap[obstacleId] ){
+							redo = true;
+							break;
+						}
+					}
+				}
+				//console.log( redo, obstacleGridSize );
+			}
+
+			this.setPosition( x, y );
 
 			if( render ){
 				this.updateEnvironmentPosition();

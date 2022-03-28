@@ -1,6 +1,7 @@
 import * as sparkline from './sparkline.js';
 import { Environment } from './environment.js';
 import Target from './target.js';
+import Obstacle from './obstacle.js';
 import { resetMap, displayNetworkMap } from './networkmap.js';
 
 import { 
@@ -158,6 +159,10 @@ const environment = new Environment({
 } );
 
 environment.addTarget( new Target( environment, 0.5, 0.5, 0.2, '#ffff00', environment.renderScale ) );
+
+environment.addObstacle( new Obstacle( environment, 1, 2 ) );
+environment.addObstacle( new Obstacle( environment, -1, 2 ) );
+environment.addObstacle( new Obstacle( environment, 0, 2 ) );
 
 environment.addEventListener( 'generation', updateStats );
 environment.addEventListener( 'reset', updateStats );
