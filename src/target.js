@@ -20,17 +20,32 @@ class Target {
 
 		this.area = Math.PI * this.radius * this.radius;
 
-		this.elem = document.createElement( 'div' );
-		this.elem.className = 'target';
-		this.elem.style.backgroundColor = color;
-		this.elem.style.borderRadius = '50%';
-		this.elem.style.position = 'absolute';
+		this.render();
+		
 		this.elem.addEventListener( 'mousedown', this.onMouseDown.bind( this ) );
 		this.elem.addEventListener( 'mouseup', this.onMouseUp.bind( this ) );
 		this.elem.addEventListener( 'mousemove', this.onMouseMove.bind( this ) );
 
 		this.setPosition( x, y );
 		this.updateEnvironmentPosition();
+	}
+
+	render () {
+
+		if( !this.elem ){
+			this.elem = document.createElement( 'div' )
+			this.elem.className = 'target';
+			this.elem.style.position = 'absolute';
+			this.elem.style.borderRadius = '50%';
+		};
+
+		this.elem.style.backgroundColor = this.color;
+		this.elem.style.left = this.x + 'px';
+		this.elem.style.top = this.y + 'px';
+		this.elem.style.width = ( this.radius * 2 * this.#environment.renderScale.x / this.#environment.renderScale.xRatio ) + 'px';
+		this.elem.style.height = ( this.radius * 2 * this.#environment.renderScale.y / this.#environment.renderScale.yRatio ) + 'px';
+
+
 	}
 
 	onMouseDown( e ) {
@@ -61,7 +76,6 @@ class Target {
 			this.updateEnvironmentPosition();
 		}
 	}
-			
 
 	hit ( x, y ) {
 		return this.distance( x, y ) == 0;

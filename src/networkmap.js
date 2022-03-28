@@ -1,6 +1,6 @@
 import * as d3 from "d3";
 import { NeuronDefinitions, NeuronTypes } from "./neuron.js";
-import { createNetwork } from "./network.js";
+import { createNetwork, cleanupNetwork } from "./network.js";
 
 var map = document.querySelector(".networkmap");
 
@@ -11,18 +11,34 @@ var svg = d3.select(".networkmapSvg"),
 
 var simulation = d3.forceSimulation()
 	.force("link", d3.forceLink().distance(0).id(function (d) { return d.id; }))
-	// .force("charge", d3.forceManyBody().strength(50))
+	.force("charge", d3.forceManyBody().strength(50))
 	.force("center", d3.forceCenter(width / 2, height / 2))
 	.force("collision", d3.forceCollide().radius(radius * 2));
 
-export function generateMapFromDna(dna) {
-	let network = createNetwork(dna, { xRatio: 1, yRatio: 1 });
-	return generateMapFromNetwork(network);
+export function displayNetworkMap( network ) {
+	map.classList.remove("hidden");
+	svg = d3.select(".networkmapSvg");
+	//console.log( map.offsetHeight );
+	width = +map.offsetWidth;
+	height = +map.offsetHeight;
+	radius = 20;
+	simulation = d3.forceSimulation()
+	.force("link", d3.forceLink().distance(0).id(function (d) { return d.id; }))
+	.force("charge", d3.forceManyBody().strength(50))
+	.force("center", d3.forceCenter(width / 2, height / 2))
+	.force("collision", d3.forceCollide().radius(radius * 2));
+	generateMapFromNetwork( network );
 }
+
+// export function generateNetworkMap(dna) {
+// 	let network = createNetwork(dna, { xRatio: 1, yRatio: 1 });
+// 	return generateMapFromNetwork(network);
+// }
 
 export function generateMapFromNetwork ( network ) {
 	let data = getMapData(network);
 	resetMap();
+	cleanupNetwork(network);
 	renderMap(data);
 	simulation.restart();
 }
@@ -34,7 +50,6 @@ function getMapData ( network ) {
 	}
 
 	let actors = network.connectedNeurons.reduce((acc, neuron) => {
-		console.log( neuron.type );
 		if (neuron.neuronType === NeuronTypes.ACTOR) {
 			acc += 1;
 		}
@@ -70,7 +85,7 @@ function getMapData ( network ) {
 	let sensoryIndex = 1;
 	let generatorIndex = sensorys + 1;
 	let outputIndex = 1;
-	console.log( network.connectedNeurons.length, 'actors', actors, 'sensory', sensorys, 'generator', generators, 'synapse', synapses );
+
 	network.connectedNeurons.forEach((neuron) => {
 		let node = {
 			id: neuron.id,
@@ -90,7 +105,6 @@ function getMapData ( network ) {
 		}
 		
 		data.nodes.push(node);
-
 		neuron.inputs.forEach((input) => {
 			data.links.push({
 				source: input.input.id,
@@ -99,7 +113,7 @@ function getMapData ( network ) {
 			});
 		});
 	});
-
+	//console.log( data );
 	return data;
 }
 
@@ -152,7 +166,7 @@ function renderMap(graph) {
 	simulation
 		.nodes(graph.nodes)
 		.on("tick", ticked);
-
+	//console.log( graph.links );
 	simulation.force("link")
 		.links(graph.links);
 

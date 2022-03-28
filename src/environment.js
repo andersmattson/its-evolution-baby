@@ -2,7 +2,6 @@ import * as Network from './network.js';
 import { EventListener } from './eventlistener.js';
 import { numberToDnaSequence, dnaSequenceToNumbers } from './helpers.js';
 import { NeuronDefinitions } from './neuron.js';
-import { generateMapFromDna } from './networkmap.js';
 
 const DEG180BYPI = 180 / Math.PI;
 
@@ -11,7 +10,6 @@ class Environment extends EventListener {
 	#networks = 			[];
 	#reps = 				[];
 	renderScale = 			{ x: 1, y: 1, xRatio: 1, yRatio: 1 };
-	#networkOffset = 		{ x: -2, y: -2 };
 
 	#canvas;
 	#interval = 			null;
@@ -280,8 +278,8 @@ class Environment extends EventListener {
 	addTarget ( target ) {
 		this.#targets.push( target );
 		this.#canvas.parentNode.appendChild( target.getElement() );
-		target.getElement().style.width = ( target.radius * 2 * this.renderScale.x / this.renderScale.xRatio ) + 'px';
-		target.getElement().style.height = ( target.radius * 2 * this.renderScale.y / this.renderScale.yRatio ) + 'px';
+		// target.getElement().style.width = ( target.radius * 2 * this.renderScale.x / this.renderScale.xRatio ) + 'px';
+		// target.getElement().style.height = ( target.radius * 2 * this.renderScale.y / this.renderScale.yRatio ) + 'px';
 
 		this.targetArea += target.area;
 	}

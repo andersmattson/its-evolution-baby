@@ -66,36 +66,35 @@ function stepNeuron ( neuron, args ) {
 	weightedAverage = weightedInput / ( neuron.inputs.length + 1 );
 
 	neuron.value = NeuronDefinitions[ neuron.type ]( {
-		time: args.iteration, 						// Think of this as the time
-		position: args.position, 						// Think of this as the sight
-		distanceToTarget: args.distanceToTarget,		// Think of this as the strength of a scent
-		targetDirection: args.targetDirection,			// The direction the scent is coming from
-		initialValue: neuron.initialValue,				// The initial value of the neuron, this comes from the DNA
-		weightedInput,									// The weighted input to the neuron
-		weightedAverage,								// The weighted average of the inputs
-		value: neuron.value,							// The current value of the neuron
-		targetVisible: args.targetVisible,				// Is the target visible
-		lastWeightedInput: neuron.lastWeightedInput,	// The last weighted input to the neuron
-		lastWeightedAverage: neuron.lastWeightedAverage,// The last weighted average of the inputs
+		value: neuron.value,							// X. The current value of the neuron
+		initialValue: neuron.initialValue,				// X. The initial value of the neuron, this comes from the DNA
+		lastWeightedInput: neuron.lastWeightedInput,	// X. The last weighted input to the neuron
+
+		weightedInput,									// X. The weighted input to the neuron
+		weightedAverage,								// X. The weighted average of the inputs
+
+		time: args.iteration, 							// X. Think of this as the time
+		distanceToTarget: args.distanceToTarget,		// X. Think of this as the strength of a scent
+		targetVisible: args.targetVisible,				// X. Is the target visible
 	} );
 
 	neuron.lastWeightedInput = weightedInput;
-	neuron.lastWeightedAverage = weightedAverage;
+//	neuron.lastWeightedAverage = weightedAverage;
 }
 
 function connectNeuronInput ( neuron, input, weight = 1 ) {
 	if( input === neuron ) {
 		if( (NeuronTypes.INPUTS & neuron.neuronType) !== 0 && (NeuronTypes.OUTPUTS & neuron.neuronType) !== 0 ) {
 			neuron.selfWeight = weight;
-			neuron.hasOutputs = true;
-			neuron.hasInputs = true;
+			neuron.hasOutputs++;
+			neuron.hasInputs++;
 			return true;
 		}
 		return false;
 	} else if ( (NeuronTypes.OUTPUTS & input.neuronType) !== 0 && (NeuronTypes.INPUTS & neuron.neuronType) !== 0 ) {
 		neuron.inputs.push( { input, weight } );
-		input.hasOutputs = true;
-		neuron.hasInputs = true;
+		input.hasOutputs++;
+		neuron.hasInputs++;
 		return true;
 	}
 	return false;
@@ -117,9 +116,9 @@ function createNeuron( { type, initialValue } ) {
 		selfWeight: 0,
 		affects: NeuronDefinitions[ _type ].affects,
 		lastWeightedInput: 0,
-		lastWeightedAverage: 0,
-		hasOutputs: false,
-		hasInputs: false,
+//		lastWeightedAverage: 0,
+		hasOutputs: 0,
+		hasInputs: 0,
 	};
 }
 

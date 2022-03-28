@@ -1,7 +1,7 @@
 import * as sparkline from './sparkline.js';
 import { Environment } from './environment.js';
 import Target from './target.js';
-import { generateMapFromDna, resetMap } from './networkmap.js';
+import { resetMap, displayNetworkMap } from './networkmap.js';
 
 import { 
 	enableNeuronDefinition,
@@ -49,8 +49,6 @@ function updateStats( stats){
 	if( $('.currentDNA') !== document.activeElement ) {
 		$('.currentDNA').innerHTML = stats.currentDNA;
 	}
-
-	generateMapFromDna( stats.currentDNANumbers );
 
 	plotData.shift();
 	plotData.push( stats.survivalRate );
@@ -270,7 +268,8 @@ $('.environmentContainer').addEventListener( 'click', (e) => {
 	if ( environment.isPaused && e.target.classList.contains( 'network' ) ) {
 		let idx = e.target.dataset.idx;
 		let network = environment.getNetwork(idx);
-		generateMapFromDna( network.dna );
-		$('.networkmap').classList.remove( 'hidden' )
+		$('.networkmap').classList.remove( 'hidden' );
+		resetMap();
+		displayNetworkMap( network );
 	}
 });

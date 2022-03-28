@@ -114,18 +114,32 @@ function setupFromDNA ( network, dna ) {
 		}
 	}
 
-	return network; //cleanupNetwork( network );
+	return cleanupNetwork( network );
 }
 
-function cleanupNetwork ( network ) {
+export function cleanupNetwork ( network ) {
 	// let connectedNeurons = [ ...network.connectedNeurons ];
-	for( let i = 0; i < network.connectedNeurons.length; i++ ){
-		if( (NeuronTypes.OUTPUTS & network.connectedNeurons[ i ].neuronType) !== 0 && !network.connectedNeurons[ i ].hasOutputs ) {
-			network.connectedNeurons.splice( i, 1 );
-			i--;
-		} else if( (NeuronTypes.INPUTS & network.connectedNeurons[ i ].neuronType) !== 0 && !network.connectedNeurons[ i ].hasInputs ) {
-			network.connectedNeurons.splice( i, 1 );
-			i--;
+	let keepGoing = true;
+	while( keepGoing ) {
+		keepGoing = false;
+		for( let i = 0; i < network.connectedNeurons.length; i++ ){
+
+			if( (NeuronTypes.OUTPUTS & network.connectedNeurons[ i ].neuronType) !== 0 && network.connectedNeurons[ i ].hasOutputs === 0 ) {
+				network.connectedNeurons[ i ].inputs.forEach( ( input ) => {
+					input.hasOutputs--;
+				} );
+				network.connectedNeurons.splice( i, 1 );
+				i--;
+				keepGoing = true;
+			}
+
+			// if( (NeuronTypes.OUTPUTS & network.connectedNeurons[ i ].neuronType) !== 0 && !network.connectedNeurons[ i ].hasOutputs ) {
+			// 	network.connectedNeurons.splice( i, 1 );
+			// 	i--;
+			// } else if( (NeuronTypes.INPUTS & network.connectedNeurons[ i ].neuronType) !== 0 && !network.connectedNeurons[ i ].hasInputs ) {
+			// 	network.connectedNeurons.splice( i, 1 );
+			// 	i--;
+			// }
 		}
 	}
 	return network;
@@ -144,12 +158,17 @@ export function clone ( network, mutate = 0.01, renderScale ) {
 }
 
 export function stepNetwork( network, targets, renderScale ) {
-	network.iteration++;
+
 	let smallestDistance = Infinity;
 	let closestTargetDirectionCoords = { x: 0, y: 0 };
 	let targetDirection = 0;
 	let direction = 0;
 	let speed = 0;
+	let targetAngle = 0;
+	let targetVisible = 0;
+	let diff = 0;
+
+	network.iteration++;
 
 	for ( let i = 0; i < targets.length; i++ ) {
 		let distance = targets[i].distance( network.position );
@@ -162,25 +181,16 @@ export function stepNetwork( network, targets, renderScale ) {
 		}
 	}
 
+	targetAngle = Math.asin( target.radius / smallestDistance );
 	targetDirection = Math.atan2( closestTargetDirectionCoords.y, closestTargetDirectionCoords.x );
 	targetDirection += targetDirection < 0 ? PI2 : 0;
 
-	let diff = Math.abs( targetDirection - network.direction );
-	// let diffRightEye = Math.abs( targetDirection - network.direction - DEG15 );
-	// let diffLeftEye = Math.abs( targetDirection - network.direction + DEG15 );
-	// let targetVisibleRight = 0;
-	// let targetVisibleLeft = 0;
+	diff = Math.abs( targetDirection - network.direction );
 
-	// if ( diffRightEye < DEG30 || diffRightEye > DEG315 ) {
-	// 	targetVisibleRight = 1;
-	// }
-	// if ( diffLeftEye < DEG30 || diffLeftEye > DEG315 ) {
-	// 	targetVisibleLeft = 1;
-	// }
-
-	let targetVisible = 0;
-
-	if( diff < DEG30 || diff > DEG330 ) {
+	if( smallestDistance == 0 ) {
+		targetVisible = 1;
+	}
+	else if( diff < DEG30 + targetAngle || diff > DEG330 - targetAngle ) {
 		targetVisible = 1;
 	} else {
 		smallestDistance = Infinity;
@@ -190,13 +200,7 @@ export function stepNetwork( network, targets, renderScale ) {
 
 		stepNeuron( network.connectedNeurons[i], { 
 			iteration: network.iteration,
-			// position: network.position,
-			// direction: network.direction,
-			// speed: network.speed,
-			// targetDirection: targetDirection,
 			distanceToTarget: smallestDistance,
-			// targetVisibleLeft: targetVisibleLeft,
-			// targetVisibleRight: targetVisibleRight,
 			targetVisible: targetVisible,
 		} );
 
