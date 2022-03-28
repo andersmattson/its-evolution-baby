@@ -167,12 +167,14 @@ export function stepNetwork( network, targets, renderScale ) {
 	let targetAngle = 0;
 	let targetVisible = 0;
 	let diff = 0;
+	let targetIdx = -1;
 
 	network.iteration++;
 
 	for ( let i = 0; i < targets.length; i++ ) {
 		let distance = targets[i].distance( network.position );
 		if ( distance < smallestDistance ) {
+			targetIdx = i;
 			smallestDistance = distance;
 			closestTargetDirectionCoords = { 
 				x: targets[i].x - network.position.x, 
@@ -181,19 +183,20 @@ export function stepNetwork( network, targets, renderScale ) {
 		}
 	}
 
-	targetAngle = Math.asin( target.radius / smallestDistance );
-	targetDirection = Math.atan2( closestTargetDirectionCoords.y, closestTargetDirectionCoords.x );
-	targetDirection += targetDirection < 0 ? PI2 : 0;
-
-	diff = Math.abs( targetDirection - network.direction );
-
 	if( smallestDistance == 0 ) {
 		targetVisible = 1;
 	}
-	else if( diff < DEG30 + targetAngle || diff > DEG330 - targetAngle ) {
-		targetVisible = 1;
-	} else {
-		smallestDistance = Infinity;
+	else {
+
+		targetAngle = Math.asin( targets[targetIdx].radius / ( smallestDistance + targets[targetIdx].radius ) );
+		targetDirection = Math.atan2( closestTargetDirectionCoords.y, closestTargetDirectionCoords.x );
+		targetDirection += targetDirection < 0 ? PI2 : 0;
+	
+		diff = Math.abs( targetDirection - network.direction );
+
+		if( diff < DEG30 + targetAngle || diff > DEG330 - targetAngle ) {
+			targetVisible = 1;
+		}
 	}
 
 	for ( let i = 0, l = network.connectedNeurons.length; i < l; i++ ) {
