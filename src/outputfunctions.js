@@ -12,6 +12,10 @@ registerNeuronDefinition( function( args ) {
 	return args.targetVisible;
 }, NeuronTypes.SENSORY, {}, 'TargetVisible', 'targetVisible', 'EYE' );
 
+registerNeuronDefinition( function( args ) {
+	return args.hasCollided;
+}, NeuronTypes.SENSORY, {}, 'Collision', 'hasCollided', 'COL' );
+
 
 // Generative neurons
 registerNeuronDefinition( function( args ) {

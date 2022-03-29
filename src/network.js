@@ -58,7 +58,8 @@ export function createNetwork( dna, renderScale ) {
 		speed: 0,
 		initialPosition: { x: 0, y: 0 },
 		dna: dna,
-		totalDistanceTraveled: 0
+		totalDistanceTraveled: 0,
+		hasCollided: 0,
 	}
 
 	network.initialPosition = { ...network.position };
@@ -193,7 +194,6 @@ export function stepNetwork( network, targets, obstacleMap, renderScale, obstacl
 		targetVisible = 1;
 	}
 	else {
-
 		targetAngle = Math.asin( targets[targetIdx].radius / ( smallestDistance + targets[targetIdx].radius ) );
 		targetDirection = Math.atan2( closestTargetDirectionCoords.y, closestTargetDirectionCoords.x );
 		targetDirection += targetDirection < 0 ? PI2 : 0;
@@ -211,6 +211,7 @@ export function stepNetwork( network, targets, obstacleMap, renderScale, obstacl
 			iteration: network.iteration,
 			distanceToTarget: smallestDistance,
 			targetVisible: targetVisible,
+			hasCollided: network.hasCollided,
 		} );
 
 		if( network.connectedNeurons[i].affects.direction ) {
@@ -236,13 +237,9 @@ export function stepNetwork( network, targets, obstacleMap, renderScale, obstacl
 		network.position.x = x;
 		network.position.y = y;
 		network.totalDistanceTraveled += network.speed;
+		network.hasCollided = 0;
+	} else {
+		network.hasCollided = 1;
 	}
 
-	// network.position.x += network.speed * Math.cos( network.direction );
-	// network.position.y += network.speed * Math.sin( network.direction );
-
-	// network.position.x = Math.min( Math.max( network.position.x, -renderScale.xRatio ), renderScale.xRatio );
-	// network.position.y = Math.min( Math.max( network.position.y, -renderScale.yRatio ), renderScale.yRatio );
-
-	// network.totalDistanceTraveled += network.speed;
 }

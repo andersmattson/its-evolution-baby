@@ -76,6 +76,8 @@ function stepNeuron ( neuron, args ) {
 		time: args.iteration, 							// X. Think of this as the time
 		distanceToTarget: args.distanceToTarget,		// X. Think of this as the strength of a scent
 		targetVisible: args.targetVisible,				// X. Is the target visible
+
+		hasCollided: args.hasCollided,					// X. Has the agent collided with something
 	} );
 
 	neuron.lastWeightedInput = weightedInput;

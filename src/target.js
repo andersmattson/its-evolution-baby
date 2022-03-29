@@ -45,7 +45,6 @@ class Target {
 		this.elem.style.width = ( this.radius * 2 * this.#environment.renderScale.x / this.#environment.renderScale.xRatio ) + 'px';
 		this.elem.style.height = ( this.radius * 2 * this.#environment.renderScale.y / this.#environment.renderScale.yRatio ) + 'px';
 
-
 	}
 
 	onMouseDown( e ) {
