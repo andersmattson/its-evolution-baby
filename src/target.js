@@ -8,10 +8,11 @@ class Target {
 	#isDragged = false;
 	#dragStartCoords;
 	#dragStartXY;
+	#randomPosition = false;
 
 	area = 0;
 
-	constructor ( environment, x, y, radius, color ) {
+	constructor ( environment, position, radius, color ) {
 		this.radius = Math.min( radius, environment.obstacleGridSize / 2 );
 		this.color = color;
 		this.#environment = environment;
@@ -24,7 +25,12 @@ class Target {
 		this.elem.addEventListener( 'mouseup', this.onMouseUp.bind( this ) );
 		this.elem.addEventListener( 'mousemove', this.onMouseMove.bind( this ) );
 
-		this.setPosition( x, y );
+		if( position ){
+			this.setPosition( position.x, position.y );
+		} else {
+			this.setRandomPosition();
+			this.#randomPosition = true;
+		}
 		this.updateEnvironmentPosition();
 	}
 
@@ -89,29 +95,32 @@ class Target {
 		this.y = Math.min( this.#environment.renderScale.yRatio - this.radius, Math.max( -this.#environment.renderScale.yRatio + this.radius, y ) );
 	}
 
-	step( { iteration, render, obstacleMap, obstacleGridSize } ) {
-		if( iteration === 0 ){
-			let x, y;
-			let redo = true;
+	setRandomPosition () {
+		let x, y;
+		let redo = true;
 
-			while ( redo ) {
-				redo = false;
-				x = ( 2 * Math.random() - 1 ) * this.#environment.renderScale.xRatio;
-				y = ( 2 * Math.random() - 1 ) * this.#environment.renderScale.yRatio;
+		while ( redo ) {
+			redo = false;
+			x = ( 2 * Math.random() - 1 ) * this.#environment.renderScale.xRatio;
+			y = ( 2 * Math.random() - 1 ) * this.#environment.renderScale.yRatio;
 
-				for( let _x = x - this.radius - obstacleGridSize; _x < x + this.radius + obstacleGridSize; _x += obstacleGridSize ){
-					for( let _y = y - this.radius - obstacleGridSize; _y < y + this.radius + obstacleGridSize; _y += obstacleGridSize ){
-						let obstacleId = Math.round( _x / obstacleGridSize ) + '_' + Math.round( _y / obstacleGridSize );
-						if( obstacleMap[obstacleId] ){
-							redo = true;
-							break;
-						}
+			for( let _x = x - this.radius - this.#environment.obstacleGridSize; _x < x + this.radius + this.#environment.obstacleGridSize; _x += this.#environment.obstacleGridSize ){
+				for( let _y = y - this.radius - this.#environment.obstacleGridSize; _y < y + this.radius + this.#environment.obstacleGridSize; _y += this.#environment.obstacleGridSize ){
+					let obstacleId = Math.round( _x / this.#environment.obstacleGridSize ) + '_' + Math.round( _y / this.#environment.obstacleGridSize );
+					if( this.#environment.obstacleMap[obstacleId] ){
+						redo = true;
+						break;
 					}
 				}
-				//console.log( redo, obstacleGridSize );
 			}
+		}
 
-			this.setPosition( x, y );
+		this.setPosition( x, y );
+	}
+
+	step( { iteration, render } ) {
+		if( iteration === 0 && this.#randomPosition ){
+			this.setRandomPosition();
 
 			if( render ){
 				this.updateEnvironmentPosition();

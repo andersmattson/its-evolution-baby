@@ -171,7 +171,7 @@ export function clone ( network, mutate = 0.01, renderScale ) {
 	return createNetwork( dna, renderScale );
 }
 
-export function stepNetwork( network, targets, obstacles, obstacleMap, renderScale, obstacleResolution ) {
+export function stepNetwork( network, targets, obstacles, obstacleMap, renderScale, obstacleGridSize ) {
 
 	let smallestDistance = Infinity;
 	let targetVector = { x: 0, y: 0 };
@@ -219,7 +219,7 @@ export function stepNetwork( network, targets, obstacles, obstacleMap, renderSca
 			for( let i = 0; i < obstacles.length; i++ ) {
 				let obstacle = obstacles[i];
 				let obstacleVector = { x: obstacle.gridPosition.x - network.position.x, y: obstacle.gridPosition.y - network.position.y };
-				let obstacleVectorLength = obstacle.distance( network.position );// Math.sqrt( Math.pow( obstacle.gridPosition.x - network.position.x, 2 ) + Math.pow( obstacle.gridPosition.y - network.position.y, 2 ) );
+				let obstacleVectorLength = obstacle.distance( network.position );
 
 				let theta = Math.acos( 
 					( 
@@ -264,7 +264,7 @@ export function stepNetwork( network, targets, obstacles, obstacleMap, renderSca
 
 	network.direction = (network.direction + Math.max( -Constants.ANGLE_LIMIT, Math.min( Constants.ANGLE_LIMIT, direction ) ) ) % ( PI2 );
 	network.direction += network.direction < 0 ? PI2 : 0;
-	network.speed = Math.max( 0, Math.min( Constants.MAXIMUM_MOVING_DISTANCE, network.speed + speed ) );
+	network.speed = Math.max( 0, Math.min( Constants.MAXIMUM_MOVING_DISTANCE, speed ) );
 
 	let x = network.position.x + Math.cos( network.direction ) * network.speed;
 	let y = network.position.y + Math.sin( network.direction ) * network.speed;
@@ -272,7 +272,7 @@ export function stepNetwork( network, targets, obstacles, obstacleMap, renderSca
 	y = Math.min( Math.max( y, -renderScale.yRatio ), renderScale.yRatio );
 
 	// Check obstacle collision
-	let obstacleId = Math.round( x * obstacleResolution / 2 ) + '_' + Math.round( y * obstacleResolution / 2 );
+	let obstacleId = Math.round( x / obstacleGridSize ) + '_' + Math.round( y / obstacleGridSize );
 	if( !obstacleMap[ obstacleId ] ) {
 		network.position.x = x;
 		network.position.y = y;

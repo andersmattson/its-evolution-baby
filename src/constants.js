@@ -14,7 +14,7 @@ class ConstantsClass {
 
 	NEURON_DATA_MIDDLE = -1; // Calculated
 
-	MAXIMUM_MOVING_DISTANCE = 0.001;
+	MAXIMUM_MOVING_DISTANCE = 0.03;
 	ANGLE_LIMIT = Math.PI * 4;
 
 	OBSTACLE_APPROX_RADIUS = (Math.sqrt(2)-1)/2 + 1;

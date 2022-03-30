@@ -34,7 +34,7 @@ class Environment extends EventListener {
 	#currentDNA = 			'';
 
 	#obstacles = 			[];
-	#obstacleMap = 			{};
+	obstacleMap = 			{};
 	obstacleResolution	=	9;
 	obstacleGridSize;
 
@@ -244,14 +244,11 @@ class Environment extends EventListener {
 			target.step( {
 				iteration: this.#iteration,
 				render: this.#render,
-				renderScale: this.renderScale,
-				obstacleMap: this.#obstacleMap,
-				obstacleGridSize: this.obstacleGridSize
 			} );
 		} );
 		
 		for ( let i = 0, l = this.#networks.length; i < l; i++ ) {
-			Network.stepNetwork( this.#networks[ i ], this.#targets, this.#obstacles, this.#obstacleMap, this.renderScale, this.obstacleResolution );
+			Network.stepNetwork( this.#networks[ i ], this.#targets, this.#obstacles, this.obstacleMap, this.renderScale, this.obstacleGridSize );
 		};
 
 		this.#iteration++;
@@ -310,7 +307,7 @@ class Environment extends EventListener {
 	addObstacle ( obstacle ) {
 		this.#obstacles.push( obstacle );
 		this.#canvas.parentNode.appendChild( obstacle.getElement() );
-		this.#obstacleMap[ obstacle.id ] = obstacle;
+		this.obstacleMap[ obstacle.id ] = obstacle;
 	}
 
 	getObstacle( index ) {
@@ -319,7 +316,7 @@ class Environment extends EventListener {
 
 	obstacleAtPosition( position ) {
 		let obstacleId = Math.round( position.x * this.obstacleResolution / 2 ) + '_' + Math.round( position.y * this.obstacleResolution / 2 );
-		return this.#obstacleMap[ obstacleId ] !== undefined;
+		return this.obstacleMap[ obstacleId ] !== undefined;
 	}
 
 	togglePause( pause ) {

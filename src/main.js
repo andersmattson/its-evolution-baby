@@ -158,7 +158,7 @@ const environment = new Environment({
 	survivorsOnly: false,
 } );
 window.environment = environment;
-environment.addTarget( new Target( environment, 0.5, 0.5, 0.2, '#ffff00', environment.renderScale ) );
+environment.addTarget( new Target( environment, { x: 0.5, y: 0.5 }, 0.2, '#ffff00', environment.renderScale ) );
 
 environment.addObstacle( new Obstacle( environment, -1, 2 ) );
 environment.addObstacle( new Obstacle( environment, 0, 2 ) );
