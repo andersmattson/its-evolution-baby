@@ -148,12 +148,18 @@ class Environment extends EventListener {
 
 		for ( let i = 0; i < this.#networks.length; i++ ) {
 
-			let position = this.pixelPosition( this.#networks[ i ].position );
+			let position = this.pixelPosition( this.#networks[ i ].previousPosition );
 			let rep = this.getRep( i );
 			rep.style.left = position.x + 'px';
 			rep.style.top = position.y + 'px';
 			rep.style.display = 'block';
-			rep.style.transform = `rotate(${this.#networks[ i ].direction * DEG180BYPI}deg)`;
+			rep.style.transform = `rotate(${this.#networks[ i ].previousDirection * DEG180BYPI}deg)`;
+
+			if( this.#networks[ i ].targetVisible ){
+				rep.style.backgroundColor = '#00ff00';
+			} else {
+				rep.style.backgroundColor = '#ff0000';
+			}
 
 		};
 
@@ -245,7 +251,7 @@ class Environment extends EventListener {
 		} );
 		
 		for ( let i = 0, l = this.#networks.length; i < l; i++ ) {
-			Network.stepNetwork( this.#networks[ i ], this.#targets, this.#obstacleMap, this.renderScale, this.obstacleResolution );
+			Network.stepNetwork( this.#networks[ i ], this.#targets, this.#obstacles, this.#obstacleMap, this.renderScale, this.obstacleResolution );
 		};
 
 		this.#iteration++;
@@ -304,12 +310,16 @@ class Environment extends EventListener {
 	addObstacle ( obstacle ) {
 		this.#obstacles.push( obstacle );
 		this.#canvas.parentNode.appendChild( obstacle.getElement() );
-		this.#obstacleMap[ obstacle.id ] = 1;
+		this.#obstacleMap[ obstacle.id ] = obstacle;
+	}
+
+	getObstacle( index ) {
+		return this.#obstacles[ index ];
 	}
 
 	obstacleAtPosition( position ) {
 		let obstacleId = Math.round( position.x * this.obstacleResolution / 2 ) + '_' + Math.round( position.y * this.obstacleResolution / 2 );
-		return this.#obstacleMap[ obstacleId ] || 0;
+		return this.#obstacleMap[ obstacleId ] !== undefined;
 	}
 
 	togglePause( pause ) {

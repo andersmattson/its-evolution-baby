@@ -17,6 +17,8 @@ class ConstantsClass {
 	MAXIMUM_MOVING_DISTANCE = 0.001;
 	ANGLE_LIMIT = Math.PI * 4;
 
+	OBSTACLE_APPROX_RADIUS = (Math.sqrt(2)-1)/2 + 1;
+
 	constructor () {
 
 		this.DNA_BASE = 4;

@@ -12,9 +12,7 @@ class Target {
 	area = 0;
 
 	constructor ( environment, x, y, radius, color ) {
-		this.x = x;
-		this.y = y;
-		this.radius = radius;
+		this.radius = Math.min( radius, environment.obstacleGridSize / 2 );
 		this.color = color;
 		this.#environment = environment;
 

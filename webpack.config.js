@@ -30,7 +30,7 @@ module.exports = (env) => {
 			devtool: 'inline-source-map',
 			output: {
 				path: path.resolve(__dirname, 'docs'),
-				filename: 'bundle.js'
+				filename: 'bundle-[hash].js'
 			},
 			devServer: {
 				static: {

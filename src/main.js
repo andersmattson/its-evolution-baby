@@ -157,12 +157,19 @@ const environment = new Environment({
 	randomInitSpawn: true,
 	survivorsOnly: false,
 } );
-
+window.environment = environment;
 environment.addTarget( new Target( environment, 0.5, 0.5, 0.2, '#ffff00', environment.renderScale ) );
 
-environment.addObstacle( new Obstacle( environment, 1, 2 ) );
 environment.addObstacle( new Obstacle( environment, -1, 2 ) );
 environment.addObstacle( new Obstacle( environment, 0, 2 ) );
+environment.addObstacle( new Obstacle( environment, 1, 2 ) );
+environment.addObstacle( new Obstacle( environment, 0, 1 ) );
+environment.addObstacle( new Obstacle( environment, 0, 0 ) );
+environment.addObstacle( new Obstacle( environment, 0, -1 ) );
+environment.addObstacle( new Obstacle( environment, -1, -2 ) );
+environment.addObstacle( new Obstacle( environment, 0, -2 ) );
+environment.addObstacle( new Obstacle( environment, 1, -2 ) );
+
 
 environment.addEventListener( 'generation', updateStats );
 environment.addEventListener( 'reset', updateStats );
@@ -273,6 +280,7 @@ $('.environmentContainer').addEventListener( 'click', (e) => {
 	if ( environment.isPaused && e.target.classList.contains( 'network' ) ) {
 		let idx = e.target.dataset.idx;
 		let network = environment.getNetwork(idx);
+		console.log( network );
 		$('.networkmap').classList.remove( 'hidden' );
 		resetMap();
 		displayNetworkMap( network );

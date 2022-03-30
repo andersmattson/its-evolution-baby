@@ -8,7 +8,9 @@ const DEG10 = Math.PI / 18;
 const DEG15 = Math.PI / 12;
 const DEG30 = Math.PI / 6;
 const DEG45 = Math.PI / 4;
-const DEG315 = Math.PI * 7 / 4;
+const DEG90 = Math.PI / 2;
+const DEG315 = PI2 - DEG45;
+const DEG270 = PI2 - DEG90;
 const DEG330 = PI2 - DEG30;
 const DEG350 = PI2 - DEG10;
 
@@ -47,19 +49,24 @@ export function randomDNA( numNeurons, numConnections ) {
 }
 
 export function createNetwork( dna, renderScale ) {
-
+	
+	let dir = Math.random() * PI2;
+	let pos = { x: 2 * ( Math.random() - 0.5 ) * renderScale.xRatio, y: 2 * ( Math.random() - 0.5 ) * renderScale.yRatio };
 	let network = {
 		neurons: [],
 		_connectedNeurons: new Set(),
 		connectedNeurons: [],
 		iteration: 0,
-		position: { x: 2 * ( Math.random() - 0.5 ) * renderScale.xRatio, y: 2 * ( Math.random() - 0.5 ) * renderScale.yRatio },
-		direction: Math.random() * PI2,
+		position: pos,
+		previousPosition: { ...pos },
+		direction: dir,
+		previousDirection: dir,
 		speed: 0,
 		initialPosition: { x: 0, y: 0 },
 		dna: dna,
 		totalDistanceTraveled: 0,
 		hasCollided: 0,
+		targetVisible: 0,
 	}
 
 	network.initialPosition = { ...network.position };
@@ -164,29 +171,32 @@ export function clone ( network, mutate = 0.01, renderScale ) {
 	return createNetwork( dna, renderScale );
 }
 
-export function stepNetwork( network, targets, obstacleMap, renderScale, obstacleResolution ) {
+export function stepNetwork( network, targets, obstacles, obstacleMap, renderScale, obstacleResolution ) {
 
 	let smallestDistance = Infinity;
-	let closestTargetDirectionCoords = { x: 0, y: 0 };
+	let targetVector = { x: 0, y: 0 };
+	let targetVectorLength = 0;
 	let targetDirection = 0;
 	let direction = 0;
 	let speed = 0;
-	let targetAngle = 0;
 	let targetVisible = 0;
 	let diff = 0;
 	let targetIdx = -1;
 
 	network.iteration++;
+	network.previousPosition = { ...network.position };
+	network.previousDirection = network.direction;
 
 	for ( let i = 0; i < targets.length; i++ ) {
 		let distance = targets[i].distance( network.position );
 		if ( distance < smallestDistance ) {
 			targetIdx = i;
 			smallestDistance = distance;
-			closestTargetDirectionCoords = { 
+			targetVector = { 
 				x: targets[i].x - network.position.x, 
 				y: targets[i].y - network.position.y
 			};
+			targetVectorLength = smallestDistance + targets[i].radius;
 		}
 	}
 
@@ -194,16 +204,46 @@ export function stepNetwork( network, targets, obstacleMap, renderScale, obstacl
 		targetVisible = 1;
 	}
 	else {
-		targetAngle = Math.asin( targets[targetIdx].radius / ( smallestDistance + targets[targetIdx].radius ) );
-		targetDirection = Math.atan2( closestTargetDirectionCoords.y, closestTargetDirectionCoords.x );
+		targetDirection = Math.atan2( targetVector.y, targetVector.x );
 		targetDirection += targetDirection < 0 ? PI2 : 0;
-	
+
+		network.targetDirection = targetDirection;
+		network.obstacleIndex = -1;
+
 		diff = Math.abs( targetDirection - network.direction );
 
-		if( diff < DEG30 + targetAngle || diff > DEG330 - targetAngle ) {
+		if( diff < DEG30 || diff > DEG330 ) {
+
 			targetVisible = 1;
+
+			for( let i = 0; i < obstacles.length; i++ ) {
+				let obstacle = obstacles[i];
+				let obstacleVector = { x: obstacle.gridPosition.x - network.position.x, y: obstacle.gridPosition.y - network.position.y };
+				let obstacleVectorLength = obstacle.distance( network.position );// Math.sqrt( Math.pow( obstacle.gridPosition.x - network.position.x, 2 ) + Math.pow( obstacle.gridPosition.y - network.position.y, 2 ) );
+
+				let theta = Math.acos( 
+					( 
+						targetVector.x * obstacleVector.x + 
+						targetVector.y * obstacleVector.y 
+					) / ( targetVectorLength * obstacleVectorLength )
+				);
+				
+				if( theta > DEG90 ) {
+					continue;
+				}
+
+				let dist = Math.abs( obstacleVector.x * targetVector.y - targetVector.x * obstacleVector.y ) / targetVectorLength;
+				if( dist < obstacle.radius ) {
+					network.obstacleIndex = i;
+					targetVisible = 0;
+					break;
+				}
+
+			}
 		}
 	}
+
+	network.targetVisible = targetVisible;
 
 	for ( let i = 0, l = network.connectedNeurons.length; i < l; i++ ) {
 

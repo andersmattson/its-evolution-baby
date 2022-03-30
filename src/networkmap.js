@@ -3,6 +3,7 @@ import { NeuronDefinitions, NeuronTypes } from "./neuron.js";
 import { createNetwork, cleanupNetwork } from "./network.js";
 
 var map = document.querySelector(".networkmap");
+var desc = document.querySelector(".networkmap .desc");
 
 var svg = d3.select(".networkmapSvg"),
 	width = +map.offsetWidth,
@@ -17,6 +18,11 @@ var simulation = d3.forceSimulation()
 
 export function displayNetworkMap( network ) {
 	map.classList.remove("hidden");
+	
+	desc.innerHTML = `
+		Target visible: ${network.targetVisible}<br>
+	`
+	
 	svg = d3.select(".networkmapSvg");
 	//console.log( map.offsetHeight );
 	width = +map.offsetWidth;
