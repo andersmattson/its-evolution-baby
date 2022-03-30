@@ -150,26 +150,29 @@ sparkline.sparkline( $(".sparkline"), plotData, plotOptions );
 const environment = new Environment({ 
 	canvas: $('.environment'),
 	numNetworks: 400,
-	numNeurons: 32,
-	numConnections: 64,
+	numNeurons: 255,
+	numConnections: 255,
+	maxIterations: 400,
 	mutationRate: 0.5,
 	waitForStart: true,
 	randomInitSpawn: true,
 	survivorsOnly: false,
-	networkStartPosition: { x: -0.8, y: 0 },
+	networkStartPosition: { x: -1, y: 0 },
 } );
 window.environment = environment;
-environment.addTarget( new Target( environment, { x: 0.5, y: 0.5 }, 0.2, '#ffff00', environment.renderScale ) );
+environment.addTarget( new Target( environment, { xMin: 0.2, yMin: -0.2, yMax: 0.2 }, 0.1, '#ffff00', environment.renderScale ) );
 
-environment.addObstacle( new Obstacle( environment, -1, 2 ) );
+environment.addObstacle( new Obstacle( environment, -1, 3 ) );
 environment.addObstacle( new Obstacle( environment, 0, 2 ) );
-environment.addObstacle( new Obstacle( environment, 1, 2 ) );
+environment.addObstacle( new Obstacle( environment, 0, 3 ) );
+environment.addObstacle( new Obstacle( environment, 0, 12 ) );
 environment.addObstacle( new Obstacle( environment, 0, 1 ) );
 environment.addObstacle( new Obstacle( environment, 0, 0 ) );
 environment.addObstacle( new Obstacle( environment, 0, -1 ) );
-environment.addObstacle( new Obstacle( environment, -1, -2 ) );
+environment.addObstacle( new Obstacle( environment, -1, -3 ) );
+environment.addObstacle( new Obstacle( environment, 0, -3 ) );
 environment.addObstacle( new Obstacle( environment, 0, -2 ) );
-environment.addObstacle( new Obstacle( environment, 1, -2 ) );
+environment.addObstacle( new Obstacle( environment, 0, -12 ) );
 
 
 environment.addEventListener( 'generation', updateStats );

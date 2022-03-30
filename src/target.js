@@ -9,11 +9,12 @@ class Target {
 	#dragStartCoords;
 	#dragStartXY;
 	#randomPosition = false;
+	#initialPosition = null;
 
 	area = 0;
 
 	constructor ( environment, position, radius, color ) {
-		this.radius = Math.min( radius, environment.obstacleGridSize / 2 );
+		this.radius = radius; //Math.min( radius, environment.obstacleGridSize / 2 );
 		this.color = color;
 		this.#environment = environment;
 
@@ -25,9 +26,11 @@ class Target {
 		this.elem.addEventListener( 'mouseup', this.onMouseUp.bind( this ) );
 		this.elem.addEventListener( 'mousemove', this.onMouseMove.bind( this ) );
 
-		if( position ){
+		if( position && position.x !== undefined && position.y !== undefined ){
+			this.#initialPosition = position;
 			this.setPosition( position.x, position.y );
 		} else {
+			this.#initialPosition = position;
 			this.setRandomPosition();
 			this.#randomPosition = true;
 		}
@@ -98,11 +101,23 @@ class Target {
 	setRandomPosition () {
 		let x, y;
 		let redo = true;
+		let xMin = -this.#environment.renderScale.xRatio;
+		let xMax = this.#environment.renderScale.xRatio;
+		let yMin = -this.#environment.renderScale.yRatio;
+		let yMax = this.#environment.renderScale.yRatio;
+
+		if( this.#initialPosition ){
+			xMin = this.#initialPosition.x !== undefined ? this.#initialPosition.x : this.#initialPosition.xMin !== undefined ? this.#initialPosition.xMin + this.radius : xMin;
+			xMax = this.#initialPosition.x !== undefined ? this.#initialPosition.x : this.#initialPosition.xMax !== undefined ? this.#initialPosition.xMax - this.radius : xMax;
+			yMin = this.#initialPosition.y !== undefined ? this.#initialPosition.y : this.#initialPosition.yMin !== undefined ? this.#initialPosition.yMin + this.radius : yMin;
+			yMax = this.#initialPosition.y !== undefined ? this.#initialPosition.y : this.#initialPosition.yMax !== undefined ? this.#initialPosition.yMax - this.radius : yMax;
+		}
 
 		while ( redo ) {
 			redo = false;
-			x = ( 2 * Math.random() - 1 ) * this.#environment.renderScale.xRatio;
-			y = ( 2 * Math.random() - 1 ) * this.#environment.renderScale.yRatio;
+			x = xMin + Math.random() * ( xMax - xMin );
+			y = yMin + Math.random() * ( yMax - yMin );
+			//y = ( 2 * Math.random() - 1 ) * this.#environment.renderScale.yRatio;
 
 			for( let _x = x - this.radius - this.#environment.obstacleGridSize; _x < x + this.radius + this.#environment.obstacleGridSize; _x += this.#environment.obstacleGridSize ){
 				for( let _y = y - this.radius - this.#environment.obstacleGridSize; _y < y + this.radius + this.#environment.obstacleGridSize; _y += this.#environment.obstacleGridSize ){

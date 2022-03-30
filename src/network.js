@@ -50,7 +50,7 @@ export function randomDNA( numNeurons, numConnections ) {
 
 export function createNetwork( dna, renderScale, startPosition ) {
 	
-	let dir = startPosition ? 0: Math.random() * PI2;
+	let dir = Math.random() * PI2;
 	let pos = startPosition ? { ...startPosition } : { x: 2 * ( Math.random() - 0.5 ) * renderScale.xRatio, y: 2 * ( Math.random() - 0.5 ) * renderScale.yRatio };
 	let network = {
 		neurons: [],
@@ -163,7 +163,7 @@ export function cleanupNetwork ( network ) {
 	return network;
 }
 
-export function clone ( network, mutate = 0.01, renderScale ) {
+export function clone ( network, mutate = 0.01, renderScale, startPosition ) {
 	let chance = Math.random();
 	let dna = network.dna;
 
@@ -172,7 +172,7 @@ export function clone ( network, mutate = 0.01, renderScale ) {
 		dna = network.dna.substring( 0, index - 1 ) + randomInt( 0, Constants.DNA_BASE - 1 ) + network.dna.substring( index );
 	}
 
-	return createNetwork( dna, renderScale );
+	return createNetwork( dna, renderScale, startPosition );
 }
 
 export function stepNetwork( network, targets, obstacles, obstacleMap, renderScale, obstacleGridSize ) {
