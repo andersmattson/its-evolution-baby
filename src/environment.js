@@ -36,7 +36,7 @@ class Environment extends EventListener {
 
 	#obstacles = 			[];
 	obstacleMap = 			{};
-	obstacleResolution	=	9;
+	obstacleResolution	=	25;
 	obstacleGridSize;
 
 	targetArea = 			0;
@@ -82,7 +82,7 @@ class Environment extends EventListener {
 		this.#waitForStart = 		true;
 		this.#numNeurons = 			numNeurons 		|| 10;
 		this.#numConnections = 		numConnections 	|| 10;
-		this.#generationLastSize = 	this.#numNetworks;
+		this.#generationLastSize = 	0;
 		this.#randomInitSpawn = 	randomInitSpawn || false;
 		this.#render = 				render || true;
 		this.#survivorsOnly = 		survivorsOnly || false;
@@ -229,7 +229,7 @@ class Environment extends EventListener {
 		} );
 
 		while ( networks.length < this.#numNetworks ) {
-			let network = Network.clone( this.#networks[ networkIndex[ Math.floor( Math.random() * networkIndex.length ) ] ], this.#mutationRate, this.renderScale );
+			let network = Network.clone( this.#networks[ networkIndex[ Math.floor( Math.random() * networkIndex.length ) ] ], this.#mutationRate, this.renderScale, this.#networkStartPosition );
 			if( this.#networkStartPosition ) {
 				Network.setInitialPosition( network, this.#networkStartPosition );
 			} else {
@@ -237,6 +237,7 @@ class Environment extends EventListener {
 					Network.setRandomInitialPosition( network, this.renderScale );
 				}
 			}
+
 			networks.push( network );
 		}
 		
@@ -291,7 +292,7 @@ class Environment extends EventListener {
 		clearInterval( this.#interval );
 
 		const stats = this.stats;
-		stats.survivalRate = ( 100 * this.#generationLastSize / this.#numNetworks).toFixed( 2 );
+		stats.survivalRate = ( this.#numNetworks ? 100 * this.#generationLastSize / this.#numNetworks : 0).toFixed( 2 );
 
 		if( !this.#waitForStart && this.#networks.length ) {
 			this.start();
