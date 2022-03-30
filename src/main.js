@@ -156,6 +156,7 @@ const environment = new Environment({
 	waitForStart: true,
 	randomInitSpawn: true,
 	survivorsOnly: false,
+	networkStartPosition: { x: -0.8, y: 0 },
 } );
 window.environment = environment;
 environment.addTarget( new Target( environment, { x: 0.5, y: 0.5 }, 0.2, '#ffff00', environment.renderScale ) );

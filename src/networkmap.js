@@ -1,6 +1,6 @@
 import * as d3 from "d3";
 import { NeuronDefinitions, NeuronTypes } from "./neuron.js";
-import { createNetwork, cleanupNetwork } from "./network.js";
+import { cleanupNetwork } from "./network.js";
 
 var map = document.querySelector(".networkmap");
 var desc = document.querySelector(".networkmap .desc");

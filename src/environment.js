@@ -20,6 +20,7 @@ class Environment extends EventListener {
 	#stepDelay = 			16;
 	#maxIterations = 		100;
 	#numNetworks = 			100;
+	#networkStartPosition = null;
 	#mutationRate = 		0.01;
 	#generationLastSize = 	0;
 	#waitForStart = 		false;
@@ -52,7 +53,8 @@ class Environment extends EventListener {
 		numConnections,
 		randomInitSpawn,
 		render,
-		survivorsOnly
+		survivorsOnly,
+		networkStartPosition,
 	} ) {
 		super();
 		this.#canvas = canvas;
@@ -88,6 +90,8 @@ class Environment extends EventListener {
 		this.#stepDelay = 			16;
 		this.obstacleGridSize = 	2 / this.obstacleResolution;
 
+		this.#networkStartPosition = networkStartPosition;
+
 		this.initRepresentation();
 		this.initRandomNetworks();
 
@@ -114,7 +118,7 @@ class Environment extends EventListener {
 	}
 
 	getRep( index ) {
-		return this.#reps[ index ]; //document.querySelector( `.rep${index}` );
+		return this.#reps[ index ];
 	}
 
 	addNetwork ( network ) {
@@ -155,7 +159,7 @@ class Environment extends EventListener {
 			rep.style.display = 'block';
 			rep.style.transform = `rotate(${this.#networks[ i ].previousDirection * DEG180BYPI}deg)`;
 
-			if( this.#networks[ i ].targetVisible ){
+			if( this.#networks[ i ].obstacleIndex === -1 ) {
 				rep.style.backgroundColor = '#00ff00';
 			} else {
 				rep.style.backgroundColor = '#ff0000';
@@ -169,7 +173,7 @@ class Environment extends EventListener {
 	}
 
 	initRandomNetworks () {
-		
+
 		this.clearNetworks();
 		this.#generation = 0;
 		this.#evolution++;
@@ -182,7 +186,7 @@ class Environment extends EventListener {
 			if( this.#randomInitSpawn ) {
 				dna = Network.randomDNA( this.#numNeurons, this.#numConnections );
 			}
-			this.addNetwork( Network.createNetwork( dna, this.renderScale ) );
+			this.addNetwork( Network.createNetwork( dna, this.renderScale, this.#networkStartPosition ) );
 		}
 	}
 
@@ -193,14 +197,13 @@ class Environment extends EventListener {
 		this.#firstDNA = dnaSequenceToNumbers( dna );
 
 		for ( let i = 0; i < this.#numNetworks; i++ ) {
-			this.addNetwork( Network.createNetwork( this.#firstDNA, this.renderScale ) );
+			this.addNetwork( Network.createNetwork( this.#firstDNA, this.renderScale, this.#networkStartPosition ) );
 		}
 	}
 
 	regenerateNetworks () {
 
 		this.#iteration = 0;
-		this.#generation++;
 		let networks = [];
 		this.#generationLastSize = 0;
 		let networkIndex = [];
@@ -227,8 +230,12 @@ class Environment extends EventListener {
 
 		while ( networks.length < this.#numNetworks ) {
 			let network = Network.clone( this.#networks[ networkIndex[ Math.floor( Math.random() * networkIndex.length ) ] ], this.#mutationRate, this.renderScale );
-			while( this.obstacleAtPosition( network.position ) ) {
-				Network.setRandomInitialPosition( network, this.renderScale );
+			if( this.#networkStartPosition ) {
+				Network.setInitialPosition( network, this.#networkStartPosition );
+			} else {
+				while( this.obstacleAtPosition( network.position ) ) {
+					Network.setRandomInitialPosition( network, this.renderScale );
+				}
 			}
 			networks.push( network );
 		}
@@ -257,11 +264,10 @@ class Environment extends EventListener {
 
 	start() {
 
-		if( this.#networks.length === 0 ) {
-			this.initRandomNetworks();
-		} else {
+		if( this.#generation > 0 ) {
 			this.regenerateNetworks();
 		}
+		this.#generation++;
 
 		this.started = true;
 		

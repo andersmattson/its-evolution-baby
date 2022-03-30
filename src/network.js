@@ -48,10 +48,10 @@ export function randomDNA( numNeurons, numConnections ) {
 	return ret;
 }
 
-export function createNetwork( dna, renderScale ) {
+export function createNetwork( dna, renderScale, startPosition ) {
 	
-	let dir = Math.random() * PI2;
-	let pos = { x: 2 * ( Math.random() - 0.5 ) * renderScale.xRatio, y: 2 * ( Math.random() - 0.5 ) * renderScale.yRatio };
+	let dir = startPosition ? 0: Math.random() * PI2;
+	let pos = startPosition ? { ...startPosition } : { x: 2 * ( Math.random() - 0.5 ) * renderScale.xRatio, y: 2 * ( Math.random() - 0.5 ) * renderScale.yRatio };
 	let network = {
 		neurons: [],
 		_connectedNeurons: new Set(),
@@ -75,10 +75,14 @@ export function createNetwork( dna, renderScale ) {
 	return network;
 }
 
-export function setRandomInitialPosition( network, renderScale ) {
-	let position = { x: 2 * ( Math.random() - 0.5 ) * renderScale.xRatio, y: 2 * ( Math.random() - 0.5 ) * renderScale.yRatio }
+export function setInitialPosition( network, position ) {
 	network.position = { ...position };
 	network.initialPosition = { ...position };
+	network.previousPosition = { ...position };
+}
+
+export function setRandomInitialPosition( network, renderScale ) {
+	setInitialPosition( network, { x: 2 * ( Math.random() - 0.5 ) * renderScale.xRatio, y: 2 * ( Math.random() - 0.5 ) * renderScale.yRatio } );
 }
 
 export function connectNeurons ( network, input, output, weight = 1 ) {
