@@ -6,15 +6,15 @@ const PI2 = Math.PI * 2;
 // Sensory neurons
 registerNeuronDefinition( function( args ) {
 	return 1 / ( 1 + args.distanceToTarget );
-}, NeuronTypes.SENSORY, {}, 'InvertedTargetDistance', '1 / ( 1 + distanceToTarget )', 'SCENT' );
+}, NeuronTypes.SENSORY, { required: true, single: true }, 'InvertedTargetDistance', '1 / ( 1 + distanceToTarget )', 'SCENT' );
 
 registerNeuronDefinition( function( args ) {
 	return args.targetVisible;
-}, NeuronTypes.SENSORY, {}, 'TargetVisible', 'targetVisible', 'EYE' );
+}, NeuronTypes.SENSORY, { required: true, single: true }, 'TargetVisible', 'targetVisible', 'EYE' );
 
 registerNeuronDefinition( function( args ) {
 	return args.hasCollided;
-}, NeuronTypes.SENSORY, {}, 'Collision', 'hasCollided', 'COL' );
+}, NeuronTypes.SENSORY, { required: true, single: true }, 'Collision', 'hasCollided', 'COL' );
 
 
 // Generative neurons
@@ -64,11 +64,11 @@ registerNeuronDefinition( function( args ) {
 // Actor neurons
 registerNeuronDefinition( function ( args ) {
 	return Math.tanh( args.weightedInput ) * PI2;
-}, NeuronTypes.ACTOR, { direction: true }, 'Direction', 'tanh( weightedInput ) * 2π', 'DIR' );
+}, NeuronTypes.ACTOR, { required: true, single: true, direction: true }, 'Direction', 'tanh( weightedInput ) * 2π', 'DIR' );
 
 registerNeuronDefinition( function ( args ) {
 	return Math.tanh( args.weightedInput ) * Constants.MAXIMUM_MOVING_DISTANCE;
-}, NeuronTypes.ACTOR, { speed: true }, 'Speed', 'tanh( weightedInput ) * MAX_DISTANCE', 'SPD' );
+}, NeuronTypes.ACTOR, { required: true, single: true, speed: true }, 'Speed', 'tanh( weightedInput ) * MAX_DISTANCE', 'SPD' );
 
 /*
 registerNeuronDefinition( function( args ) {

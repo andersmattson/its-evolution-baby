@@ -1,6 +1,5 @@
 import * as d3 from "d3";
 import { NeuronDefinitions, NeuronTypes } from "./neuron.js";
-import { cleanupNetwork } from "./network.js";
 
 var map = document.querySelector(".networkmap");
 var desc = document.querySelector(".networkmap .desc");
@@ -21,10 +20,9 @@ export function displayNetworkMap( network ) {
 	
 	desc.innerHTML = `
 		Target visible: ${network.targetVisible}<br>
-	`
+	`;
 	
 	svg = d3.select(".networkmapSvg");
-	//console.log( map.offsetHeight );
 	width = +map.offsetWidth;
 	height = +map.offsetHeight;
 	radius = 20;
@@ -39,7 +37,6 @@ export function displayNetworkMap( network ) {
 export function generateMapFromNetwork ( network ) {
 	let data = getMapData(network);
 	resetMap();
-	cleanupNetwork(network);
 	renderMap(data);
 	simulation.restart();
 }
@@ -50,43 +47,6 @@ function getMapData ( network ) {
 		links: []
 	}
 
-	let actors = network.connectedNeurons.reduce((acc, neuron) => {
-		if (neuron.neuronType === NeuronTypes.ACTOR) {
-			acc += 1;
-		}
-		return acc;
-	}, 0);
-
-	let sensorys = network.connectedNeurons.reduce((acc, neuron) => {
-		if (neuron.neuronType === NeuronTypes.SENSORY) {
-			acc += 1;
-		}
-		return acc;
-	}, 0);
-
-	let generators = network.connectedNeurons.reduce((acc, neuron) => {
-		if (neuron.neuronType === NeuronTypes.GENERATOR) {
-			acc += 1;
-		}
-		return acc;
-	}, 0);
-
-	let synapses = network.connectedNeurons.reduce((acc, neuron) => {
-		if (neuron.neuronType === NeuronTypes.SYNAPSE) {
-			acc += 1;
-		}
-		return acc;
-	}, 0);
-
-	let inputs = generators + sensorys;
-	let inputStepSize = width / (inputs + 1);
-
-	let outputStepSize = width / (actors + 1);
-
-	let sensoryIndex = 1;
-	let generatorIndex = sensorys + 1;
-	let outputIndex = 1;
-
 	network.connectedNeurons.forEach((neuron) => {
 		let node = {
 			id: neuron.id,
@@ -94,27 +54,16 @@ function getMapData ( network ) {
 			group: NeuronDefinitions[neuron.type].type
 		};
 
-		if( node.group === NeuronTypes.ACTOR ) {
-			node.fx = outputStepSize * ( outputIndex++ );
-			node.fy = height * 3 / 4;
-		} else if( node.group === NeuronTypes.SENSORY ) {
-			node.fx = inputStepSize * ( sensoryIndex++ );
-			node.fy = height / 4;
-		} else if( node.group === NeuronTypes.GENERATOR ) {
-			node.fx = inputStepSize * ( generatorIndex++ );
-			node.fy = height / 4;
-		}
-		
 		data.nodes.push(node);
 		neuron.inputs.forEach((input) => {
 			data.links.push({
 				source: input.input.id,
 				target: neuron.id,
-				value: 1 // input.weight
+				value: 1
 			});
 		});
 	});
-	//console.log( data );
+
 	return data;
 }
 

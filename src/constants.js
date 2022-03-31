@@ -6,6 +6,7 @@ class ConstantsClass {
 	CONNECTION_DATA_LENGTH = 10;
 
 	#NEURON_TYPES = 0; // Set from neuron.js
+	#REQUIRED_NEURONS = 0; // Set from neuron.js
 	NEURON_TOTAL_LENGTH = -1; // Calculated
 	NEURON_TYPE_LENGTH = -1; // Calculated
 	CONNECTION_TOTAL_LENGTH = -1; // Calculated
@@ -42,6 +43,14 @@ class ConstantsClass {
 		this.updateNeuronTypeCount( this.#NEURON_TYPES );
 	}
 
+	get REQUIRED_NEURONS () {
+		return this.#REQUIRED_NEURONS;
+	}
+
+	set REQUIRED_NEURONS ( count ) {
+		this.#REQUIRED_NEURONS = count;
+	}
+	
 	get NEURON_TYPES () {
 		return this.#NEURON_TYPES;
 	}

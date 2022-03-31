@@ -7,7 +7,9 @@ const NeuronTypes = {
 	GENERATOR: 8, 	// No inputs, only outputs
 
 	INPUTS: 6,
-	OUTPUTS: 11
+	OUTPUTS: 11,
+	HASOUTPUTS: 11,
+	HASINPUTS: 6
 };
 
 const NeuronTypeNames = Object.keys( NeuronTypes ).reduce( ( acc, key ) => {
@@ -27,12 +29,18 @@ function registerNeuronDefinition( fn, type = NeuronTypes.SYNAPSE, affects = {},
 
 	fn.type = type;
 	fn.affects = affects;
+	fn.required = !!affects.required;
+	fn.single = !!affects.single;
 	fn.neuronName = name;
 	fn.shortName = shortName;
 	fn.description = description;
 	NeuronDefinitions.push( fn );
 	NeuronDefinitionMap[ name ] = fn;
 	Constants.NEURON_TYPES = NeuronDefinitions.length;
+
+	if( fn.required ) {
+		Constants.REQUIRED_NEURONS = Constants.REQUIRED_NEURONS + 1;
+	}
 }
 
 function enableNeuronDefinition( name ) {
@@ -55,7 +63,7 @@ function disableNeuronDefinition( name ) {
 
 function stepNeuron ( neuron, args ) {
 	neuron.iteration++;
-	let weightedInput = neuron.selfWeight * neuron.value;
+	let weightedInput = 0;
 	let weightedAverage;
 
 	for( let i = 0; i < neuron.inputs.length; i++ ) {
@@ -85,15 +93,13 @@ function stepNeuron ( neuron, args ) {
 }
 
 function connectNeuronInput ( neuron, input, weight = 1 ) {
-	if( input === neuron ) {
-		if( (NeuronTypes.INPUTS & neuron.neuronType) !== 0 && (NeuronTypes.OUTPUTS & neuron.neuronType) !== 0 ) {
-			neuron.selfWeight = weight;
-			neuron.hasOutputs++;
-			neuron.hasInputs++;
+	if( input === neuron && !NeuronDefinitions[ neuron.type ].single ) {
+		if( (NeuronTypes.HASINPUTS & neuron.neuronType) !== 0 && (NeuronTypes.HASOUTPUTS & neuron.neuronType) !== 0 ) {
+			neuron.selfWeight += weight;
 			return true;
 		}
 		return false;
-	} else if ( (NeuronTypes.OUTPUTS & input.neuronType) !== 0 && (NeuronTypes.INPUTS & neuron.neuronType) !== 0 ) {
+	} else if ( (NeuronTypes.HASOUTPUTS & input.neuronType) !== 0 && (NeuronTypes.HASINPUTS & neuron.neuronType) !== 0 ) {
 		neuron.inputs.push( { input, weight } );
 		input.hasOutputs++;
 		neuron.hasInputs++;

@@ -29,15 +29,32 @@ function fillValue( value, length ) {
 }
 
 export function randomDNA( numNeurons, numConnections ) {
+	
 	let ret = '';
 	let numNeuronsStr = numNeurons.toString( Constants.DNA_BASE );
 	let numConnectionsStr = numConnections.toString( Constants.DNA_BASE );
+	let r;
+
 	ret += fillValue( numNeuronsStr, Constants.NEURON_INDEX_LENGTH );
 	ret += fillValue( numConnectionsStr, Constants.CONNECTION_INDEX_LENGTH );
-	for( let i = 0; i < numNeurons; i++ ){
-		ret += fillValue(randomInt( 0, NeuronDefinitions.length - 1 ).toString( Constants.DNA_BASE ), Constants.NEURON_TYPE_LENGTH );
+	
+	let required = 0;
+
+	NeuronDefinitions.forEach( ( def, i ) => {
+		if( def.required ){
+			required++;
+			ret += fillValue( i.toString( Constants.DNA_BASE ), Constants.NEURON_TYPE_LENGTH );
+			ret += fillValue(randomInt( 0, Math.pow( Constants.DNA_BASE, 8 ) ).toString( Constants.DNA_BASE ), Constants.NEURON_DATA_LENGTH );
+		}
+	});
+
+	for( let i = required; i < numNeurons; i++ ){
+		r = randomInt( 0, NeuronDefinitions.length - 1 );
+		
+		ret += fillValue( r.toString( Constants.DNA_BASE ), Constants.NEURON_TYPE_LENGTH );
 		ret += fillValue(randomInt( 0, Math.pow( Constants.DNA_BASE, 8 ) ).toString( Constants.DNA_BASE ), Constants.NEURON_DATA_LENGTH );
 	}
+
 	for( let i = 0; i < numConnections; i++ ){
 		let inputIndex = fillValue(randomInt( 0, numNeurons - 1 ).toString( Constants.DNA_BASE ), Constants.NEURON_INDEX_LENGTH );
 		let outputIndex = fillValue(randomInt( 0, numNeurons - 1 ).toString( Constants.DNA_BASE ), Constants.NEURON_INDEX_LENGTH );
@@ -45,6 +62,7 @@ export function randomDNA( numNeurons, numConnections ) {
 		ret += outputIndex;
 		ret += fillValue(randomInt( 0, Math.pow( Constants.DNA_BASE, 8 ) ).toString( Constants.DNA_BASE ), Constants.CONNECTION_DATA_LENGTH );
 	}
+
 	return ret;
 }
 
@@ -116,8 +134,14 @@ function setupFromDNA ( network, dna ) {
 		let initialValue = ( parseInt( dna.substring( idx + Constants.NEURON_TYPE_LENGTH, idx + Constants.NEURON_TOTAL_LENGTH ), Constants.DNA_BASE ) - Constants.NEURON_DATA_MIDDLE ) / Constants.NEURON_DATA_MIDDLE;
 
 		if( type < NeuronDefinitions.length ) {
-			network.neurons.push( createNeuron({ initialValue, type }) );
+			let n = createNeuron({ initialValue, type });
+			network.neurons.push( n );
+			if( NeuronDefinitions[ type ].required ) {
+				network._connectedNeurons.add( n );
+				network.connectedNeurons.push( n );
+			}
 		}
+
 	}
 
 	for( let i = 0; i < numConnections; i++ ){
@@ -138,26 +162,88 @@ function setupFromDNA ( network, dna ) {
 export function cleanupNetwork ( network ) {
 	// let connectedNeurons = [ ...network.connectedNeurons ];
 	let keepGoing = true;
-	while( keepGoing ) {
-		keepGoing = false;
-		for( let i = 0; i < network.connectedNeurons.length; i++ ){
+	
+	// Merge all single neurons
+	let singles = {};
 
-			if( (NeuronTypes.OUTPUTS & network.connectedNeurons[ i ].neuronType) !== 0 && network.connectedNeurons[ i ].hasOutputs === 0 ) {
-				network.connectedNeurons[ i ].inputs.forEach( ( input ) => {
-					input.hasOutputs--;
-				} );
+	for( let i = 0; i < network.connectedNeurons.length; i++ ) {
+		let n = network.connectedNeurons[ i ];
+		let type = NeuronDefinitions[ n.type ].type;
+
+		if( type === NeuronTypes.ACTOR ){
+			
+			if( !singles[ n.type ] ) {
+				singles[ n.type ] = n;
+			} else {
+				singles[ n.type ].inputs = singles[ n.type ].inputs.concat( n.inputs );
+				singles[ n.type ].hasInputs += n.hasInputs;
 				network.connectedNeurons.splice( i, 1 );
+				network._connectedNeurons.delete( n );
 				i--;
-				keepGoing = true;
 			}
 
-			// if( (NeuronTypes.OUTPUTS & network.connectedNeurons[ i ].neuronType) !== 0 && !network.connectedNeurons[ i ].hasOutputs ) {
-			// 	network.connectedNeurons.splice( i, 1 );
-			// 	i--;
-			// } else if( (NeuronTypes.INPUTS & network.connectedNeurons[ i ].neuronType) !== 0 && !network.connectedNeurons[ i ].hasInputs ) {
-			// 	network.connectedNeurons.splice( i, 1 );
-			// 	i--;
-			// }
+			for( let j = 0; j < n.inputs.length; j++ ) {
+				let input = n.inputs[ j ].input;
+				let isSingle = NeuronDefinitions[ input.type ].single;
+				if( isSingle ) {
+					if( !singles[ input.type ] ) {
+						singles[ input.type ] = input;
+					} else {
+						input.hasOutputs--;
+						n.inputs[ j ].input = singles[ input.type ];
+						singles[ input.type ].hasOutputs++;
+					}
+				}
+			}
+
+		} else if ( type === NeuronTypes.SENSORY ){
+
+		} else if ( type === NeuronTypes.GENERATOR ){
+			
+		} else {
+			for( let j = 0; j < n.inputs.length; j++ ) {
+				let input = n.inputs[ j ].input;
+				let isSingle = NeuronDefinitions[ input.type ].single;
+				if( isSingle ) {
+					if( !singles[ input.type ] ) {
+						singles[ input.type ] = input;
+					} else {
+						input.hasOutputs--;
+						n.inputs[ j ].input = singles[ input.type ];
+						singles[ input.type ].hasOutputs++;
+					}
+				}
+			}
+		}
+
+	}
+
+	while( keepGoing ) {
+		
+		keepGoing = false;
+		
+		for( let i = 0; i < network.connectedNeurons.length; i++ ){
+			let n = network.connectedNeurons[ i ];
+			
+			if( (NeuronTypes.HASOUTPUTS & n.neuronType) !== 0 && n.hasOutputs < 1 ) {
+				
+				n.inputs.forEach( ( input ) => {
+					input.input.hasOutputs--;
+				} );
+				
+				network.connectedNeurons.splice( i, 1 );
+				network._connectedNeurons.delete( n );
+				//i--;
+				keepGoing = true;
+				break;
+			} else if(
+				NeuronDefinitions[ n.type ].single &&
+				(NeuronTypes.HASINPUTS & n.neuronType) !== 0 && 
+				n.hasInputs < 1
+			) {
+				network.connectedNeurons.splice( i, 1 );
+				network._connectedNeurons.delete( n );
+			}
 		}
 	}
 	return network;
@@ -168,7 +254,7 @@ export function clone ( network, mutate = 0.01, renderScale, startPosition ) {
 	let dna = network.dna;
 
 	if ( chance < mutate ) {
-		let index = randomInt( Constants.NEURON_INDEX_LENGTH + Constants.CONNECTION_INDEX_LENGTH, network.dna.length - 1 );
+		let index = randomInt( Constants.REQUIRED_NEURONS * Constants.NEURON_TOTAL_LENGTH + Constants.NEURON_INDEX_LENGTH + Constants.CONNECTION_INDEX_LENGTH, network.dna.length - 1 );
 		dna = network.dna.substring( 0, index - 1 ) + randomInt( 0, Constants.DNA_BASE - 1 ) + network.dna.substring( index );
 	}
 
